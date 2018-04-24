@@ -2,8 +2,8 @@
 class Beam(object):
 
     def __init__(self):
-        self.xyz = [0.539, -1.926, 0.0]
-        self.xi = 89.1 # Angle between x-axis and beam axis
+        self.xyz = [0.539, -1.926, 0.0] #xyz position of duct
+        self.xi = 85.16 #89.1 # Angle between x-axis and beam axis
         self.delta = 90 #Angle between z-axis and beam axis
         self.distance_source2duct = 4.98 # Distance between beam source and beam duct
         self.f_horizontal = 14.00 # Horizontal focus of beam (from source)
