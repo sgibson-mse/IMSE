@@ -13,7 +13,7 @@ def get_images(filename):
     return images
 
 def prepare_image(images, frame):
-    image = images[:, :, frame].astype(np.float64)
+    image = images[:, :, frame]
     image = image/np.max(image)
 
     return image
@@ -121,6 +121,19 @@ def plot_spectrogram(image_fft):
 def linear_fit(x, m, c):
     return m*x + c
 
+def plot_image(image):
+
+    plt.figure()
+    plt.title('Ne $\lambda$ = 600nm, Calibration Image $\phi_{45^{\circ}}$')
+    plt.imshow(image.T)
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel('Normalised Intensity', rotation=90)
+    plt.xlabel('x pixels')
+    plt.ylabel('y pixels')
+    plt.show()
+
+    return
+
 ny=1280
 nx=1080
 n_frames = 38
@@ -129,7 +142,7 @@ filename = str(os.getcwd()) + '/sam_8.dat'
 phases = np.zeros((1280,1080,n_frames))
 phase_differences = []
 
-for i in range(len(frame)):
+for i in range(n_frames):
     images = get_images(filename)
     image = prepare_image(images, frame[i])
     x_center, y_center = center_points(image)
@@ -166,18 +179,19 @@ phase_offsets = central_offsets[0:7] #take first points before the phase jump
 polariser_angles = rotary_stage_angles[0:7]
 
 guess = [1,1]
-popt, pcov = curve_fit(linear_fit, polariser_angles, phase_offsets/4, p0 = guess)
+popt, pcov = curve_fit(linear_fit, polariser_angles, phase_offsets, p0 = guess)
 y_fit = popt[0]*polariser_angles + popt[1]
-print('Fitted offset is,', popt[1])
+print('Fitted offset is,', popt[1]/4)
 print('Gradient is', popt[0])
-
+#
 plt.figure()
-plt.plot(polariser_angles, y_fit, '--', label='fitted')
+plt.plot(polariser_angles, y_fit/4, '--', label='fitted')
 plt.plot(polariser_angles, phase_offsets/4, 'x', label='Data')
 plt.xlabel('Polariser angle (degrees)')
 plt.ylabel('Phase offset (degrees)')
 plt.legend()
 plt.show()
+
 
 # plt.figure()
 # plt.plot(rotary_stage_angles, central_offsets/4, 'x')
@@ -186,7 +200,7 @@ plt.show()
 # plt.show()
 #
 # plt.figure()
-# plt.imshow(phases[:,:,1]-phases[:,:,0])
+# plt.imshow(phases[:,:,3]-phases[:,:,2])
 # plt.colorbar()
-# plt.clim(-100,100)
+# plt.clim(-3,1)
 # plt.show()
