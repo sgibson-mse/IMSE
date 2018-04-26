@@ -28,7 +28,7 @@ def center_points(image):
 def fft_2D(image):
     return np.fft.fft2(image, axes=(0,1))
 
-def get_carrier_frequency(x_center):
+def get_carrier_frequency(x_center, image):
 
     image_fft = fft_2D(image)
     shift_image = np.fft.fftshift(image_fft) #shift so DC frequency is in the center.
@@ -112,14 +112,108 @@ def unwrap(phase_array):
 
     return phase_uw
 
+def calculate_phase(n_frames, filename, frame):
+
+    phase_differences = []
+    phases = np.zeros((1280, 1080, n_frames))
+
+    for i in range(n_frames):
+        images = get_images(filename)
+        image = prepare_image(images, frame[i])
+        x_center, y_center = center_points(image)
+        image_fft = fft_2D(image)
+        carrier_peak_coord, shift_image = get_carrier_frequency(x_center, image)
+
+        center = [carrier_peak_coord[1], carrier_peak_coord[0]]
+        radius = 20
+        h,w = np.shape(image)
+        mask = createCircularMask(h, w, center=center, radius=radius)
+        phase = filter_image(mask, shift_image)
+
+        unwrapped_phase = unwrap(phase)
+
+        phases[:,:,i] = unwrapped_phase
+
+    for n in range(n_frames-1):
+        phase_difference = phases[:,:,n+1] - phases[:,:,n]
+        phase_differences.append(phase_difference)
+
+    phase_diff = np.asarray(phase_differences)
+    phase_diff = phase_diff[::2,:,:]
+
+    return phases, phase_diff
+
+def linear_fit(x, m, c):
+    return m*x + c
+
+def calculate_offset(ny, nx, phase_diff):
+
+    center_y = np.round((ny - 1) / 2).astype(np.int)
+    center_x = np.round((nx - 1) / 2).astype(np.int)
+
+    central_offsets = phase_diff[:,center_y, center_x]*(180./np.pi)
+
+    rotary_stage_angles = np.arange(0,190,10)
+
+    #Do a fit to calculate the offset!
+
+    phase_offsets = central_offsets[0:7] #take first points before the phase jump
+    polariser_angles = rotary_stage_angles[0:7]
+
+    guess = [1,1]
+    popt, pcov = curve_fit(linear_fit, polariser_angles, phase_offsets, p0 = guess)
+    y_fit = popt[0]*polariser_angles + popt[1]
+    offset = popt[1]/4
+    print('Fitted offset is,', popt[1]/4)
+    print('Gradient is', popt[0])
+
+    return polariser_angles, phase_offsets, y_fit, offset
+
+def offset_from_reference(phase_diff, nx, ny, n_frames):
+
+    reference_image = phase_diff[0,:,:]
+    offset_images = np.zeros((int(n_frames/2), ny, nx))
+
+    print(phase_diff.shape)
+    print(offset_images.shape)
+
+    for i in range(int(n_frames/2)-1):
+        offset_images[i,:,:] = phase_diff[i,:,:] - reference_image
+
+    #offset_images = offset_images[0::2,:,:]
+
+    return offset_images
+
+def calculate_offset_from_reference(ny, nx, offset_images):
+
+    center_y = np.round((ny - 1) / 2).astype(np.int)
+    center_x = np.round((nx - 1) / 2).astype(np.int)
+
+    central_offsets = offset_images[:,center_y, center_x]*(180./np.pi)
+
+    rotary_stage_angles = np.arange(0,190,10)
+
+    print(rotary_stage_angles)
+
+    #Do a fit to calculate the offset!
+
+    phase_offsets = central_offsets[0:7] #take first points before the phase jump
+    polariser_angles = rotary_stage_angles[0:7]
+
+    guess = [1,1]
+    popt, pcov = curve_fit(linear_fit, polariser_angles, phase_offsets, p0 = guess)
+    y_fit = popt[0]*polariser_angles + popt[1]
+
+    print('Fitted offset is,', popt[1]/4)
+    print('Gradient is', popt[0])
+
+    return polariser_angles, phase_offsets, y_fit
+
 def plot_spectrogram(image_fft):
     plt.figure()
     plt.imshow(np.fft.fftshift(np.log10(abs(image_fft))))
     plt.colorbar()
     plt.show()
-
-def linear_fit(x, m, c):
-    return m*x + c
 
 def plot_image(image):
 
@@ -139,51 +233,23 @@ nx=1080
 n_frames = 38
 frame = np.arange(0,38,1)
 filename = str(os.getcwd()) + '/sam_8.dat'
-phases = np.zeros((1280,1080,n_frames))
-phase_differences = []
 
-for i in range(n_frames):
-    images = get_images(filename)
-    image = prepare_image(images, frame[i])
-    x_center, y_center = center_points(image)
-    image_fft = fft_2D(image)
-    carrier_peak_coord, shift_image = get_carrier_frequency(x_center)
+phases, phase_diff = calculate_phase(n_frames, filename, frame)
+polariser_angles, phase_offsets, y_fit, offset = calculate_offset(ny, nx, phase_diff)
 
-    center = [carrier_peak_coord[1], carrier_peak_coord[0]]
-    radius = 20
-    h,w = np.shape(image)
-    mask = createCircularMask(h, w, center=center, radius=radius)
-    phase = filter_image(mask, shift_image)
+#Calculate the offset using the first FLC state image as a reference
 
-    unwrapped_phase = unwrap(phase)
+#offset_images = offset_from_reference(phase_diff, nx, ny, n_frames)
+#polariser_angles, phase_offsets, y_fit = calculate_offset_from_reference(ny, nx, offset_images)
 
-    phases[:,:,i] = unwrapped_phase
+residual_offset = (phase_offsets/4 - polariser_angles) - offset
 
-for n in range(n_frames-1):
-    phase_difference = phases[:,:,n+1] - phases[:,:,n]
-    phase_differences.append(phase_difference)
+plt.figure()
+plt.plot(residual_offset, 'x')
+plt.ylabel('4 $\Theta$ data - 4 $\ Theta$ input')
+plt.xlabel('Frame')
+plt.show()
 
-phase_diff = np.asarray(phase_differences)
-phase_diff = phase_diff[::2,:,:]
-
-center_y = np.round((ny - 1) / 2).astype(np.int)
-center_x = np.round((nx - 1) / 2).astype(np.int)
-
-central_offsets = phase_diff[:,center_y, center_x]*(180./np.pi)
-
-rotary_stage_angles = np.arange(0,190,10)
-
-#Do a fit to calculate the offset!
-
-phase_offsets = central_offsets[0:7] #take first points before the phase jump
-polariser_angles = rotary_stage_angles[0:7]
-
-guess = [1,1]
-popt, pcov = curve_fit(linear_fit, polariser_angles, phase_offsets, p0 = guess)
-y_fit = popt[0]*polariser_angles + popt[1]
-print('Fitted offset is,', popt[1]/4)
-print('Gradient is', popt[0])
-#
 plt.figure()
 plt.plot(polariser_angles, y_fit/4, '--', label='fitted')
 plt.plot(polariser_angles, phase_offsets/4, 'x', label='Data')
@@ -191,16 +257,15 @@ plt.xlabel('Polariser angle (degrees)')
 plt.ylabel('Phase offset (degrees)')
 plt.legend()
 plt.show()
-
-
-# plt.figure()
-# plt.plot(rotary_stage_angles, central_offsets/4, 'x')
-# plt.xlabel('Polariser Angle (degrees)')
-# plt.ylabel('Phase offset at image center (degrees)')
-# plt.show()
+#
+#
+# # plt.figure()
+# # plt.plot(rotary_stage_angles, central_offsets/4, 'x')
+# # plt.xlabel('Polariser Angle (degrees)')
+# # plt.ylabel('Phase offset at image center (degrees)')
+# # plt.show()
 #
 # plt.figure()
 # plt.imshow(phases[:,:,3]-phases[:,:,2])
 # plt.colorbar()
-# plt.clim(-3,1)
 # plt.show()
