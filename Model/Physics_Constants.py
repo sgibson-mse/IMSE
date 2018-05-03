@@ -1,4 +1,4 @@
-from numpy import pi
+from numpy import pi, array, sin, cos
 
 class Constants(object):
 
@@ -25,3 +25,6 @@ class Conversions(object):
         self.to_nm = 1**10 #convert to nm from m
         self.deg2rad = pi/180.
         self.rad2deg = 180./pi
+
+    def jacobian(self):
+        return array([[sin(self.phi),0,cos(self.phi)],[cos(self.phi),0,-sin(self.phi)],[0,0,1]])
