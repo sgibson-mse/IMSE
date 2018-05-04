@@ -2,7 +2,6 @@
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
-from matplotlib import collections as matcoll
 
 # Internal imports
 
@@ -22,10 +21,12 @@ def calc_doppler_shift():
     #find the beam vector
 
     beam_duct = np.array([0.539, -1.926, 0.]) #machine coords of beam duct
+
     R_duct = np.sqrt(beam_duct[0]**2 + beam_duct[1]**2) #R co-ordinates of beam duct
     phi_duct = np.arctan2(beam_duct[1],beam_duct[0]) #phi coord of beam duct
 
     beam_source = np.array([0.188, -6.88, 0.]) #machine coords of beam source
+
     R_source = np.sqrt(beam_source[0]**2 + beam_source[1]**2) #R co-ord beam source
     phi_source = np.arctan2(beam_source[1],beam_source[0]) #phi co-ord beam source
 
@@ -42,11 +43,18 @@ def calc_doppler_shift():
 
     #take some points along the beam from the duct to the tangency radius
 
-    points_along_beam = np.arange(R_duct, 0.705, -0.01)
+    R_tangency = 0.6736325922289328
 
-    for i in range(len(points_along_beam)):
+    distance_to_beam = np.arange(R_duct, R_tangency, -0.01)
+    distance_along_beam = np.sqrt(distance_to_beam**2 - R_tangency**2)
+
+    distance_along_beam = distance_along_beam[0] - distance_along_beam
+
+    print('distance_along_beam', distance_along_beam)
+
+    for i in range(len(distance_along_beam)):
         #points along the beam in xyz machine coords = beam_duct_point + beam_vector*length_along_beam
-        sample_points.append(beam_duct + beam_axis*points_along_beam[i])
+        sample_points.append(beam_duct + beam_axis*distance_along_beam[i])
 
         #vector between sample point and collection optics (beam points - collection optics position)
         emission_vector = sample_points[:][i] - collection_optics_point
@@ -78,29 +86,61 @@ def calc_doppler_shift():
         lambda_shift = rest_wavelength + (lambda_vac / constant.c) * beam.velocity * np.dot(beam_axis, emission_vectors[i,:])
         lambda_doppler.append(lambda_shift)
 
-    major_radius = np.flipud(points_along_beam)
+    major_radius = distance_to_beam
     lambda_doppler = np.array(lambda_doppler)
 
-    return major_radius, lambda_doppler, beam_axis, emission_vectors
+    return major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points
 
-def calculate_Efield(major_radius, beam_axis):
+def calculate_Efield(sample_points, beam_axis):
 
-    Bt = 1/major_radius
+    sample_points_r = []
+    sample_points_phi = []
+    sample_points_z = []
 
-    Br = np.zeros((len(major_radius)))
-    Bz = np.zeros((len(major_radius)))
-    B_field = np.array([Br,Bt,Bz])
+    for i in range(len(sample_points)):
+        sample_points_r.append(np.sqrt(sample_points[i][0]**2 + sample_points[i][1]**2))
+        sample_points_phi.append(np.arctan2(sample_points[i][1], sample_points[i][0]))
+        sample_points_z.append(sample_points[i][2])
+
+    sample_points_cylindrical = np.array([sample_points_r, sample_points_phi, sample_points_z])
+
+    phi_hat = np.array([0, 1, 0])
+
+    Bt = 1/(sample_points_cylindrical[0,:])
 
     E = []
     E_vector = []
 
-    for i in range(len(major_radius)):
-        E_field_vectors = beam.velocity * np.cross(beam_axis, B_field[:,i])
+    for i in range(len(sample_points_cylindrical[-1])):
+
+        Bx = np.sin(sample_points_cylindrical[1,i])
+        By = np.cos(sample_points_cylindrical[1,i])
+        Bz = 0.
+
+        B_xyz = np.array([Bx,By,Bz])
+
+        # print('beam axis', beam_axis)
+        #
+        #
+        # print('B_xyz', B_xyz)
+        #
+        # print('R', sample_points_cylindrical[0,i])
+        #
+        # print('phi', sample_points_cylindrical[1,i])
+
+        print('angle_beam_bfield', np.arccos(np.dot(beam_axis, B_xyz/(np.sqrt(B_xyz[0]**2 + B_xyz[1])**2)))*(180./np.pi))
+
+
+        E_field_vectors = beam.velocity * np.cross(beam_axis, B_xyz)
 
         E_mag = np.sqrt(E_field_vectors.dot(E_field_vectors))
 
         E_vector.append(E_field_vectors)
         E.append(E_mag)
+
+    plt.figure()
+    plt.plot(E)
+    plt.show()
 
     return E, E_vector
 
@@ -121,9 +161,9 @@ def calculate_intensities(E, E_vector, lambda_doppler, emission_vectors):
 
     for i in range(len(emission_vectors)):
 
-        stark_shift = m * 2.77 * 10 ** -7 * E[i] * 10 ** -10
+        stark_shift = m * 2.77 * 10 ** -7 * E[i] * (10 ** -10)
 
-        lambda_stark[:,i] = stark_shift * 10 ** -9 + lambda_doppler[i]
+        lambda_stark[:,i] = stark_shift + lambda_doppler[i]
 
         I_polarised[:,i] = (1 - ((E_vector[:][i].dot(emission_vectors[i,:]))**2 / E_vector[:][i].dot(E_vector[:][i]))) * transition_weights
 
@@ -134,218 +174,29 @@ def calculate_intensities(E, E_vector, lambda_doppler, emission_vectors):
 
     return I_polarised, I_unpolarised, lambda_stark
 
-def add_delay(I_polarised, I_unpolarised, lambda_stark):
+def add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius):
 
     I_total = abs(I_polarised) + I_unpolarised
 
+    contrast = []
+
     for i in range(len(I_polarised[-1])):
 
-        bbo = AlphaBBO(lambda_stark[:,i], constant)
+        bbo = AlphaBBO(lambda_stark[:,i])
 
-        Intensity_displacer = abs(I_polarised[:,i]) * np.exp(1j*bbo.phi_0)
+        Intensity_displacer = I_polarised[:,i] * np.exp(1j*bbo.phi_0)
 
-        contrast = abs(np.sum(Intensity_displacer))/np.sum(I_total[:,i])
+        contrast.append(abs(np.sum(Intensity_displacer))/np.sum(I_total[:,i]))
 
-        print(contrast)
-
+    plt.figure()
+    plt.plot(major_radius, contrast)
+    plt.xlabel('Major radius (m)')
+    plt.ylabel('Contrast')
+    plt.show()
 
     return
 
-
-def run():
-    major_radius, lambda_doppler, beam_axis, emission_vectors = calc_doppler_shift()
-
-    E, E_vector = calculate_Efield(major_radius, beam_axis)
-    I_polarised, I_unpolarised, lambda_stark = calculate_intensities(E, E_vector, lambda_doppler, emission_vectors)
-    add_delay(I_polarised, I_unpolarised, lambda_stark)
-    return
-
-run()
-
-
-#
-# m = np.array([-4, -3, -2, -1, 0, 1, 2, 3, 4])
-#
-# #Relative weights of the intensities of the transitions given a statistical population
-# r0 = 0.28
-# r1 = 0.11
-# r2 = 0.04
-# r3 = 0.12
-# r4 = 0.09
-#
-# transitions = np.array([-r4, -r3, -r2, r1, r0, r1, -r2, -r3, -r4]) #* beam_emission_intensity
-#
-# lambda_fromduct = lambda_shift[r_at0:]
-# emission_vector = emission_vector[:,r_at0:]
-#
-# wavelength_transitions = []
-# I_p = []
-# I_up = []
-# I_tot = []
-#
-# #Assume the E field = VxB + Er (Er = 0 for simplicity), B = Bt = 1/R ~ 0.6T on MAST
-# Bt = np.array([0, 2.5*1.2, 0])
-#
-# E_field_vector = beam_velocity * np.cross(beam_vector/np.sqrt(beam_vector.dot(beam_vector)), Bt)
-#
-# beam_vector_norm = beam_vector/np.sqrt(beam_vector.dot(beam_vector))
-# bt_norm = Bt/ np.sqrt(Bt.dot(Bt))
-#
-# stark_shift = m * 2.77*10**-7 * np.sqrt(E_field_vector.dot(E_field_vector)) * 10**-10 # linear_shift * magnetic quantum number * mag(E fld) * Angstroms (V/m)
-#
-# for i in range(len(lambda_fromduct)):
-#
-#     lambda_d = lambda_fromduct[i]
-#
-#     lambda_transitions = stark_shift*10**-9 + lambda_d
-#
-#     wavelength_transitions.append(lambda_transitions)
-#
-#     I_polarised = ( 1 - (E_field_vector.dot(emission_vector[:,i])))**2/E_field_vector.dot(E_field_vector) * transitions
-#
-#     I_p.append(I_polarised)
-#
-#     I_unpolarised = 2 * (E_field_vector.dot(emission_vector[:,i]))**2/E_field_vector.dot(E_field_vector) * abs(transitions)
-#
-#     #I = 0 for m = +/-4, 3, 2
-#     I_unpolarised[0:3]=0.
-#     I_unpolarised[6:-1]=0.
-#     I_up.append(I_unpolarised)
-#
-#     I_total = abs(I_polarised) + I_unpolarised
-#     I_tot.append(I_total)
-#
-# I_tot = np.asarray(I_tot)
-# I_up = np.asarray(I_up)
-# I_p = np.asarray(I_p)
-#
-# eta = []
-#
-# for i in range(107):
-#     wavelengths = np.array([wavelength_transitions])[0,i,:] *1*10**6
-#
-#     bbo = AlphaBBO(wavelengths, constant)
-#
-#     Intensity_displacer = I_p[i,:] * np.exp(1j*bbo.phi_0)
-#
-#     contrast = abs(np.sum(Intensity_displacer))/np.sum(I_tot[i,:])
-#
-#     eta.append(contrast)
-#
-# eta = abs(np.array([eta]))[0,:]
-#
-# lambdas = np.array([wavelength_transitions])[0,:,0]
-#
-# # plt.figure()
-# # plt.plot(bbo.phi_0, eta)
-# # plt.xlabel('delay')
-# # plt.ylabel('Constrast')
-# # plt.show()
-# #
-# # plt.figure()
-# # markerline, stemlines, baseline = plt.stem(wavelength_transitions[50]*10**9, transitions, linefmt='--', markerfmt=' ')
-# # plt.setp(baseline, color='black', linewidth=2)
-# # plt.setp(stemlines[0:3], color='blue')
-# # plt.setp(stemlines[6:9], color='blue')
-# # plt.setp(stemlines[3:6], color='red')
-# # plt.ylabel('Transition Intensity')
-# # plt.xlabel('Wavelength (m)')
-# # plt.show()
-#
-# # plt.figure()
-# # plt.plot(r_fromduct[r_at0:], lambda_shift[r_at0:]*10**9)
-# # plt.xlabel('Distance along Beam from the Duct (m)')
-# # plt.ylabel('Doppler Shifted Wavelength (nm)')
-# # plt.show()
-
-
-# with open('beam.pkl', 'rb') as handle:
-#     beam_params = pickle.load(handle)
-#
-# yc = beam_params['xc']
-# zc = beam_params['yc']
-# xc = beam_params['zc']
-#
-# # xyz co-ordinates of the collection optics
-#
-# collection_optics_vector = np.array([-0.949, -2.228, 0.000])  # xyz
-#
-# # Find the points along the beam in machine-coordinates.
-#
-# xc = np.asarray(xc) - abs(beam.source_coordinates[1])
-# yc = np.asarray(yc) - abs(beam.source_coordinates[2])
-# zc = np.asarray(zc) - abs(beam.source_coordinates[0])
-#
-# idx_0 = abs(xc - beam.yxz[1]).argmin()
-#
-# x_machine = xc[idx_0:]
-# y_machine = yc[idx_0:]
-# z_machine = zc[idx_0:]
-#
-# view_vectors = np.array([x_machine, y_machine, z_machine])
-#
-# def beam_geometry():
-#
-#     #Define some sample points along the beam in machine co-ordinates
-#
-#     with open('beam_sample2.pkl', 'rb') as handle:
-#         beam_params = pickle.load(handle)
-#
-#     #Where are the collection optics in machine co-ordinates
-#     collection_optics_vector = np.array([-0.949, -2.228,  0.000])
-#
-#     x_coords = beam_params['xc'] #- beam.vector[2]
-#     y_coords = beam_params['yc'] #- beam.vector[0]
-#     z_coords = beam_params['zc'] #- beam.vector[1]
-#
-#     print(z_coords)
-#
-#     coords = np.array([x_coords, y_coords, z_coords])
-#
-#     return coords, collection_optics_vector
-#
-# def cartesian2cylindrical(x,y,z):
-#
-#     r = np.asarray(np.sqrt(x**2 + y**2))
-#     phi = np.asarray(np.arctan2(y,x))
-#
-#     return np.array([r,phi,z])
-#
-# def normalise(vector):
-#
-#     vector_transpose = np.transpose(vector)
-#     mod = np.sqrt(np.dot(vector, vector_transpose))
-#     return vector / mod
-#
-# def doppler_shift(lambda_vac, coords):
-#
-#     print(coords.shape)
-#
-#     lambda_shift = rest_wavelength + (lambda_vac / constant.c) * beam.velocity * np.dot(beam.vector, coords)
-#
-#     #calculate for all points (which include outside the duct, so cut from the beam duct)
-#
-#     coords_r = np.sqrt(coords[0]**2 + coords[1]**2)
-#     beam_source_r = np.sqrt(beam.source_coordinates[0]**2 + beam.source_coordinates[1]**2)
-#
-#     duct_r = abs(coords_r - beam_source_r - 0).argmin()
-#
-#     lambda_shift = lambda_shift[duct_r:]
-#     coords_from_duct = coords[:,duct_r:]
-#
-#     return lambda_shift, coords_from_duct
-#
-# def get_major_radii(coords_from_duct):
-#
-#     coordinates = cartesian2cylindrical(coords_from_duct[0,:], coords_from_duct[1,:], coords_from_duct[2,:])
-#
-#     distance_to_center_fromduct = beam.xyz
-#
-#     r_distance = np.sqrt(distance_to_center_fromduct[1]**2 - distance_to_center_fromduct[0]**2)
-#
-#     r_tangency = 0.705
-#
-#     major_radius = np.linspace(r_distance, r_tangency, len(coordinates[-1]))
-#
-#     return major_radius, coordinates
-
+major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points  = calc_doppler_shift()
+E, E_vector = calculate_Efield(sample_points, beam_axis)
+I_polarised, I_unpolarised, lambda_stark = calculate_intensities(E, E_vector, lambda_doppler, emission_vectors)
+add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius)
