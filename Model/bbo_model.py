@@ -2,16 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from Model.Physics_Constants import Constants
+constants = Constants()
 
 class AlphaBBO(object):
 
-    def __init__(self, wavelength, constants):
+    def __init__(self, wavelength, thickness, cut_angle):
 
         self.wavelength = wavelength * 10**6 #convert to micrometers
-        self.cut_angle = 45 * (np.pi/180.)
+        self.cut_angle = cut_angle * (np.pi/180.)
         self.alpha = 4.7 * (180./np.pi) #non axial ray incidence angle
-        self.L = 20000 #um crystal thickness
-        self.focal_length = 85*10**-6 #micrometers
+        self.L = thickness #um crystal thickness
+        self.focal_length = 85*10**3 #micrometers
         self.angular_frequency = 2 * np.pi * (constants.c / self.wavelength)
         self.sc_ne = [2.3753, 0.012240, -0.016670, -0.01516]
         self.sc_no = [2.7359, 0.018780, -0.018220, -0.01354]
@@ -56,4 +57,4 @@ class AlphaBBO(object):
     def find_pixel_positions(self):
         self.x = -1 * self.alpha * self.focal_length * np.cos(self.beta)
 
-constants = Constants()
+

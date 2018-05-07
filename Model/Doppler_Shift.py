@@ -43,14 +43,13 @@ def calc_doppler_shift():
 
     #take some points along the beam from the duct to the tangency radius
 
-    R_tangency = 0.6736325922289328
+    R_tangency = 0.6736
 
-    distance_to_beam = np.arange(R_duct, R_tangency, -0.01)
+    distance_to_beam = np.linspace(R_duct, R_tangency, 5000)
+
     distance_along_beam = np.sqrt(distance_to_beam**2 - R_tangency**2)
 
     distance_along_beam = distance_along_beam[0] - distance_along_beam
-
-    print('distance_along_beam', distance_along_beam)
 
     for i in range(len(distance_along_beam)):
         #points along the beam in xyz machine coords = beam_duct_point + beam_vector*length_along_beam
@@ -119,28 +118,12 @@ def calculate_Efield(sample_points, beam_axis):
 
         B_xyz = np.array([Bx,By,Bz])
 
-        # print('beam axis', beam_axis)
-        #
-        #
-        # print('B_xyz', B_xyz)
-        #
-        # print('R', sample_points_cylindrical[0,i])
-        #
-        # print('phi', sample_points_cylindrical[1,i])
-
-        print('angle_beam_bfield', np.arccos(np.dot(beam_axis, B_xyz/(np.sqrt(B_xyz[0]**2 + B_xyz[1])**2)))*(180./np.pi))
-
-
         E_field_vectors = beam.velocity * np.cross(beam_axis, B_xyz)
 
         E_mag = np.sqrt(E_field_vectors.dot(E_field_vectors))
 
         E_vector.append(E_field_vectors)
         E.append(E_mag)
-
-    plt.figure()
-    plt.plot(E)
-    plt.show()
 
     return E, E_vector
 
@@ -174,7 +157,7 @@ def calculate_intensities(E, E_vector, lambda_doppler, emission_vectors):
 
     return I_polarised, I_unpolarised, lambda_stark
 
-def add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius):
+def add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius, cut_angle, thickness):
 
     I_total = abs(I_polarised) + I_unpolarised
 
@@ -182,11 +165,15 @@ def add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius):
 
     for i in range(len(I_polarised[-1])):
 
-        bbo = AlphaBBO(lambda_stark[:,i])
+        wavelength = lambda_stark[:,i]
+
+        bbo = AlphaBBO(wavelength, thickness, cut_angle)
 
         Intensity_displacer = I_polarised[:,i] * np.exp(1j*bbo.phi_0)
 
         contrast.append(abs(np.sum(Intensity_displacer))/np.sum(I_total[:,i]))
+
+    print(contrast)
 
     plt.figure()
     plt.plot(major_radius, contrast)
@@ -196,7 +183,12 @@ def add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius):
 
     return
 
+thickness = 10000  # um
+cut_angle = 45  # degrees
+
 major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points  = calc_doppler_shift()
 E, E_vector = calculate_Efield(sample_points, beam_axis)
 I_polarised, I_unpolarised, lambda_stark = calculate_intensities(E, E_vector, lambda_doppler, emission_vectors)
-add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius)
+add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius, cut_angle, thickness)
+
+

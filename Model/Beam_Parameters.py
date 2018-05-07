@@ -7,7 +7,7 @@ conversion = Conversions()
 class Beam(object):
 
     def __init__(self):
-        self.xyz = np.array([0.539, -1.926, 0.0]) #xyz position of duct
+        self.beam_duct = np.array([0.539, -1.926, 0.0]) #xyz position of duct
         self.xi = 85.16 * np.pi/180.  #89.1 # Angle between x-axis and beam axis
         self.delta = 90 * np.pi/180. #Angle between z-axis and beam axis
         self.distance_source2duct = 4.98 # Distance between beam source and beam duct
@@ -30,9 +30,9 @@ class Beam(object):
 
         self.vector = np.array([np.cos(self.xi) * np.sin(self.delta), np.sin(self.xi) * np.sin(self.delta), np.cos(self.delta)])
 
-        self.source_coordinates = self.xyz - self.distance_source2duct * self.vector
+        self.source_coordinates = self.beam_duct - self.distance_source2duct * self.vector
 
-        self.length = self.xyz + self.vector
+        self.length = self.beam_duct + self.vector
 
 
 

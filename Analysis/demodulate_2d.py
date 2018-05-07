@@ -16,6 +16,7 @@ def prepare_image(images, frame):
     image = images[:, :, frame]
     image = image/np.max(image)
 
+
     return image
 
 def center_points(image):
@@ -141,6 +142,12 @@ def calculate_phase(n_frames, filename, frame):
     phase_diff = np.asarray(phase_differences)
     phase_diff = phase_diff[::2,:,:]
 
+    # plt.figure()
+    # plt.imshow(phase_diff[1,:,:])
+    # plt.clim(-20,20)
+    # plt.colorbar()
+    # plt.show()
+
     return phases, phase_diff
 
 def linear_fit(x, m, c):
@@ -264,8 +271,3 @@ plt.show()
 # # plt.xlabel('Polariser Angle (degrees)')
 # # plt.ylabel('Phase offset at image center (degrees)')
 # # plt.show()
-#
-# plt.figure()
-# plt.imshow(phases[:,:,3]-phases[:,:,2])
-# plt.colorbar()
-# plt.show()
