@@ -8,7 +8,7 @@ class AlphaBBO(object):
 
     def __init__(self, wavelength, thickness, cut_angle):
 
-        self.wavelength = wavelength * 10**6 #convert to micrometers
+        self.wavelength = wavelength * 10**-4 #convert to micrometers
         self.cut_angle = cut_angle * (np.pi/180.)
         self.alpha = 4.7 * (180./np.pi) #non axial ray incidence angle
         self.L = thickness #um crystal thickness

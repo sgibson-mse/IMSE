@@ -1,6 +1,12 @@
+"""
+This code calculates the Doppler shifted emission wavelengths given some specific beam parameters, specified in Beam_Parameters.py.
+It then calculates the relative intensities of the polarised and unpolarised light using a very basic model (delta function linewidths).
+It also calculates the stark splitting and returns the stark split wavelengths.
+"""
+
+
 # External imports
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 
 # Internal imports
@@ -92,6 +98,8 @@ def calc_doppler_shift():
 
 def calculate_Efield(sample_points, beam_axis):
 
+    #Find our sample points along the beam in cylindrical co-ordinates
+
     sample_points_r = []
     sample_points_phi = []
     sample_points_z = []
@@ -106,6 +114,8 @@ def calculate_Efield(sample_points, beam_axis):
     phi_hat = np.array([0, 1, 0])
 
     Bt = 1/(sample_points_cylindrical[0,:])
+
+    #Calculate a very simple E field - define that B = Bt ~ 1/R and E = VxB (Er = 0), E is all in Z direction
 
     E = []
     E_vector = []
@@ -128,6 +138,8 @@ def calculate_Efield(sample_points, beam_axis):
     return E, E_vector
 
 def calculate_intensities(E, E_vector, lambda_doppler, emission_vectors):
+
+    #Given weights of the intensities of each pi and sigma transition
 
     r0 = 0.28
     r1 = 0.11
@@ -157,7 +169,7 @@ def calculate_intensities(E, E_vector, lambda_doppler, emission_vectors):
 
     return I_polarised, I_unpolarised, lambda_stark
 
-def add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius, cut_angle, thickness):
+def add_delay(I_polarised, I_unpolarised, lambda_stark):
 
     I_total = abs(I_polarised) + I_unpolarised
 
@@ -167,28 +179,31 @@ def add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius, cut_angle,
 
         wavelength = lambda_stark[:,i]
 
-        bbo = AlphaBBO(wavelength, thickness, cut_angle)
+        bbo = AlphaBBO(wavelength, thickness=30000, cut_angle=45)
 
         Intensity_displacer = I_polarised[:,i] * np.exp(1j*bbo.phi_0)
 
         contrast.append(abs(np.sum(Intensity_displacer))/np.sum(I_total[:,i]))
 
-    print(contrast)
-
-    plt.figure()
-    plt.plot(major_radius, contrast)
-    plt.xlabel('Major radius (m)')
-    plt.ylabel('Contrast')
-    plt.show()
-
     return
-
-thickness = 10000  # um
-cut_angle = 45  # degrees
 
 major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points  = calc_doppler_shift()
 E, E_vector = calculate_Efield(sample_points, beam_axis)
 I_polarised, I_unpolarised, lambda_stark = calculate_intensities(E, E_vector, lambda_doppler, emission_vectors)
-add_delay(I_polarised, I_unpolarised, lambda_stark, major_radius, cut_angle, thickness)
+
+class Spectrum(object):
+
+    def __init__(self):
+        self.major_radius = major_radius
+        self.R_duct = R_duct
+        self.R_tangency = R_tangency
+        self.emission_vectors = emission_vectors
+        self.sample_points = sample_points
+        self.lambda_doppler = lambda_doppler
+        self.lambda_stark = lambda_stark
+        self.E = E
+        self.E_vector = E_vector
+        self.I_polarised = I_polarised
+        self.I_unpolarised = I_unpolarised
 
 
