@@ -94,6 +94,12 @@ def calc_doppler_shift():
     major_radius = distance_to_beam
     lambda_doppler = np.array(lambda_doppler)
 
+    plt.figure()
+    plt.title('Lambda as a function of R')
+    plt.plot(lambda_doppler,major_radius)
+    plt.ylim(0.8,1.25)
+    plt.show()
+
     return major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points
 
 def calculate_Efield(sample_points, beam_axis):
