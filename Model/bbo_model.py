@@ -35,6 +35,7 @@ class AlphaBBO(object):
                    sellmeier_coefficients[2])) + (sellmeier_coefficients[3] * (self.wavelength ** 2)))
 
     def frequency_dispersion(self):
+
         #Calculate derivatives using central differences method
 
         d_omega = np.gradient(self.angular_frequency)
