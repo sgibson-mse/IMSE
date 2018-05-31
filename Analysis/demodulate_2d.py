@@ -9,7 +9,7 @@ from scipy.optimize import curve_fit
 from Analysis.read_binary import load_binary
 
 def get_images(filename):
-    images = load_binary(filename, FLC=True)
+    images = load_binary(filename, FLC=False)
     return images
 
 def prepare_image(images, frame):
@@ -235,11 +235,12 @@ def plot_image(image):
 
     return
 
-ny=1280
-nx=1080
-n_frames = 38
+ny=2560   #1280
+nx=2160       #1080
+n_frames = 37
 frame = np.arange(0,38,1)
-filename = str(os.getcwd()) + '/sam_8.dat'
+
+filename = str(os.getcwd()) + '/sam_11.dat'
 
 phases, phase_diff = calculate_phase(n_frames, filename, frame)
 polariser_angles, phase_offsets, y_fit, offset = calculate_offset(ny, nx, phase_diff)
