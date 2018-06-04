@@ -58,10 +58,24 @@ SN_pco = signal_to_noise(intensity_pco, pco.read_out, dark_pco, shot_pco)
 
 print(np.min(SN_sa4))
 
+SMALL_SIZE = 12
+MEDIUM_SIZE = 16
+BIGGER_SIZE = 18
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
 plt.figure()
 plt.plot(integration_time_sa4*1000, SN_sa4, '--', label='sa4')
 plt.plot(integration_time_pco*1000, SN_pco, '-.', label='pco')
-plt.title('63kV beam, Min ~10$^{6}\gamma /s$')
+plt.xlim(0,5)
+plt.ylim(0,90)
+plt.title('63kV beam, Average 4.3x10$^{7}\gamma /s$')
 plt.xlabel('Integration time [ms]')
 plt.ylabel('Signal to Noise')
 plt.legend()

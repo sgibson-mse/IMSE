@@ -21,6 +21,18 @@ conversion = Conversions()
 constant = Constants() #physics constant
 optics = CollectionOptics()
 
+SMALL_SIZE = 12
+MEDIUM_SIZE = 16
+BIGGER_SIZE = 18
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
 
 def calc_doppler_shift():
 
@@ -95,9 +107,10 @@ def calc_doppler_shift():
     lambda_doppler = np.array(lambda_doppler)
 
     plt.figure()
-    plt.title('Lambda as a function of R')
-    plt.plot(lambda_doppler,major_radius)
-    plt.ylim(0.8,1.25)
+    plt.plot(lambda_doppler*10**9,major_radius)
+    plt.ylim(0.8,1.5)
+    plt.xlabel('Wavelength $\lambda$ (nm)')
+    plt.ylabel('Major Radius (m)')
     plt.show()
 
     return major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points
@@ -185,17 +198,18 @@ def add_delay(I_polarised, I_unpolarised, lambda_stark):
 
         wavelength = lambda_stark[:,i]
 
-        bbo = AlphaBBO(wavelength, thickness=30000, cut_angle=45)
+        bbo = AlphaBBO(wavelength, thickness=18000, cut_angle=45)
 
         Intensity_displacer = I_polarised[:,i] * np.exp(1j*bbo.phi_0)
 
         contrast.append(abs(np.sum(Intensity_displacer))/np.sum(I_total[:,i]))
 
-    return
+    return contrast, bbo
 
 major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points  = calc_doppler_shift()
 E, E_vector = calculate_Efield(sample_points, beam_axis)
 I_polarised, I_unpolarised, lambda_stark = calculate_intensities(E, E_vector, lambda_doppler, emission_vectors)
+contrast,bbo = add_delay(I_polarised, I_unpolarised, lambda_stark)
 
 class Spectrum(object):
 
@@ -211,5 +225,16 @@ class Spectrum(object):
         self.E_vector = E_vector
         self.I_polarised = I_polarised
         self.I_unpolarised = I_unpolarised
+        self.contrast = contrast
 
+spectrum = Spectrum()
 
+plt.figure()
+markerline, stemlines, baseline = plt.stem(spectrum.lambda_stark[:,1000]*10**9, spectrum.I_polarised[:,1000], linefmt='--', markerfmt=' ')
+plt.setp(baseline, color='black', linewidth=2)
+plt.setp(stemlines[0:3], color='blue')
+plt.setp(stemlines[6:9], color='blue')
+plt.setp(stemlines[3:6], color='red')
+plt.ylabel('Intensity')
+plt.xlabel('Wavelength (nm)')
+plt.show()

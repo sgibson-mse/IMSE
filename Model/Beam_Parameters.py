@@ -21,7 +21,7 @@ class Beam(object):
         self.ionisation_rate = 5*10**-20 #Ionisation rate of beam particles per m (m**2)
         self.emission_rate = 2.5*10**-18 # Emission rate of beam particles per second (photons m**3/s)
 
-        self.energy = 65 * 10 ** 3  # 65kV Beam -full energy component
+        self.energy = 63 * 10 ** 3  # 65kV Beam -full energy component
         self.mass = constants.mass_p  # Assume Hydrogen beam for now
         self.velocity = np.sqrt(2 * constants.charge_e * self.energy / self.mass)
 
