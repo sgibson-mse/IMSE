@@ -15,8 +15,6 @@ def get_images(filename):
 def prepare_image(images, frame):
     image = images[:, :, frame]
     image = image/np.max(image)
-
-
     return image
 
 def center_points(image):
