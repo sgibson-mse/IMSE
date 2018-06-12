@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp2d
 from Model.bbo_model import Crystal
+import pandas as pd
 
 SMALL_SIZE = 12
 MEDIUM_SIZE = 16
@@ -59,7 +60,7 @@ def calculate_synthetic_image(FLC_state):
     stokes_total = data["total_stokes"]
 
     wavelength = data["wavelength_vector"]
-    wavelength = wavelength/10 #convert to nm
+    wavelength = wavelength*10**-10 #convert to m
 
     R = data["resolution_vector(R)"]
     R = R[:,0]
@@ -68,10 +69,10 @@ def calculate_synthetic_image(FLC_state):
     ny= 1024
     pixel_size = 20*10**-6
 
-    x = np.arange(-int(nx/2), int(nx/2)+1, 1)*pixel_size
-    y = np.arange(-int(ny/2), int(ny/2)+1, 1)*pixel_size
+    x = np.arange(+0.5-int(nx/2), int(nx/2), 1)*pixel_size
+    y = np.arange(+0.5-int(ny/2), int(ny/2), 1)*pixel_size
 
-    x_small = x[::50] #grid that the msesim output is defined by
+    x_small = x[::50]
     y_small = y[::50]
 
     xx, yy = np.meshgrid(x,y)
@@ -80,15 +81,21 @@ def calculate_synthetic_image(FLC_state):
     S1_small = stokes_total[:,1,:].reshape(21,21,len(wavelength)) #x,y,lambda
     S2_small = stokes_total[:,2,:].reshape(21,21,len(wavelength))#x,y,lambda
 
-    # Make crystals
-    # Make the delay and displacer plates
-
-    delay_plate = Crystal(wavelength=wavelength, thickness=15000, cut_angle=0, name='alpha_bbo')
-    displacer_plate = Crystal(wavelength=wavelength, thickness=3000, cut_angle=45, name='alpha_bbo')
+    # x=x[::5]
+    # y=y[::5]
 
     S_total = np.zeros((len(x), len(y), len(wavelength)))
 
     for i in range(len(wavelength)):
+
+        #Make the delay and displacer plate to find the phase shift for a given wavelength
+
+        delay_plate = Crystal(wavelength=wavelength[i], thickness=0.015, cut_angle=0., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90.)
+
+        displacer_plate = Crystal(wavelength=wavelength[i], thickness=0.003, cut_angle=45., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90.)
+
+        #Interpolate our small 200x200 msesim grid to the real image size, 1024x1024
+
         S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='cubic')
         S0 = S0_interp(x,y)
 
@@ -98,18 +105,34 @@ def calculate_synthetic_image(FLC_state):
         S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='cubic')
         S2 = S2_interp(x,y)
 
-        phase_shear = displacer_plate.phi_shear[i] * yy
-        phase_hyperbolic_delay = delay_plate.phi_hyperbolic[i] * ( (3-np.cos(2*delay_plate.cut_angle))*xx**2 - ((3*np.cos(2*delay_plate.cut_angle))-1)*yy**2 )
-        phase_hyperbolic_displacer = displacer_plate.phi_hyperbolic[i] * ( (3-np.cos(2*displacer_plate.cut_angle))*xx**2 - ((3*np.cos(2*displacer_plate.cut_angle))-1)*yy**2 )
+        #Calculate the total intensity for a given wavelength, propagating stokes components through a delay plate and a displacer plate.
 
         if FLC_state == 1:
-            S_total[:,:,i] = S0 + S1*np.sin((delay_plate.phi_0[i]+displacer_plate.phi_0[i]+phase_shear+phase_hyperbolic_delay+phase_hyperbolic_displacer)) + S2*np.cos((delay_plate.phi_0[i]+displacer_plate.phi_0[i]+phase_shear+phase_hyperbolic_delay+phase_hyperbolic_displacer))
+            S_total[:,:,i] = S0 + S1*np.sin((delay_plate.phi_total + displacer_plate.phi_total)) + S2*np.cos((delay_plate.phi_total + displacer_plate.phi_total))
         if FLC_state == 2:
-            S_total[:,:,i] = S0 + S1*np.sin((delay_plate.phi_0[i]+displacer_plate.phi_0[i]+phase_shear+phase_hyperbolic_delay+phase_hyperbolic_displacer)) - S2*np.cos((delay_plate.phi_0[i]+displacer_plate.phi_0[i]+phase_shear+phase_hyperbolic_delay+phase_hyperbolic_displacer))
+            S_total[:,:,i] = S0 + S1*np.sin((delay_plate.phi_total + displacer_plate.phi_total)) - S2*np.cos((delay_plate.phi_total + displacer_plate.phi_total))
 
     synthetic_image = np.sum(S_total, axis=2)
 
     return synthetic_image
+
+def save_image(image, filename):
+
+    x = pd.HDFStore(filename)
+
+    x.append("a", pd.DataFrame(image)) # <-- This will take a while.
+    x.close()
+
+    return
+
+image_1 = calculate_synthetic_image(FLC_state=1)
+print('Made image 1! Saving...')
+save_image(image_1, filename="image_FLC1.hdf")
+
+print('Making image 2...')
+image_2 = calculate_synthetic_image(FLC_state=2)
+print('Image 2 complete! Saving...')
+save_image(image_2, filename="image_FLC2.hdf")
 
 
 # gamma_profile = np.sum(polarisation_angle, axis=2)
