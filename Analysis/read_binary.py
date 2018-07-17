@@ -41,12 +41,8 @@ def load_binary(filename, FLC):
 
         data = np.fromfile(f, dtype=np.int32)
 
-        print(len(data))
-
         #Order must be fortran-like to preserve the memory layout
 
         images = data.reshape(nx, ny, n_frames, order='F')
 
     return images
-
-load_binary(filename='/home/sam/Desktop/Projects/IMSE-MSE/Analysis/sam_11.dat', FLC=False)

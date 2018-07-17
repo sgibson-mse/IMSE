@@ -1,14 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from Model.Physics_Constants import Constants
+from Model.Constants import Constants
 constants = Constants()
 
 class Crystal(object):
 
-    def __init__(self, wavelength, thickness, cut_angle, name, nx, ny, pixel_size, orientation):
+    def __init__(self, wavelength, thickness, cut_angle, name, nx, ny, pixel_size, orientation, two_dimensional):
 
         self.name = name
+        self.two_dimensional = two_dimensional
         self.nx = nx
         self.ny = ny
         self.pixel_size = pixel_size
@@ -38,13 +39,13 @@ class Crystal(object):
 
         self.birefringence = self.ne - self.no
 
-        self.phi_total = self.phase_total()
+        if self.two_dimensional == True:
 
-        # self.phi_0 = self.phase_offset()
-        #
-        # self.phi_shear = self.phase_shear()
-        #
-        # self.phi_hyperbolic = self.phase_hyperbolic()
+            self.phi_total = self.phase_total()
+        else:
+            self.phi_0 = self.phase_offset()
+            self.phi_shear = self.phase_shear()
+            self.phi_hyperbolic = self.phase_hyperbolic()
 
     def refractive_index(self, sellmeier_coefficients, name):
 
@@ -60,9 +61,6 @@ class Crystal(object):
 
         x = np.arange(-int(self.nx / 2)+0.5, int(self.nx / 2), 1) * self.pixel_size
         y = np.arange(-int(self.ny / 2)+0.5, int(self.ny / 2), 1) * self.pixel_size
-
-        # x=x[::5]
-        # y=y[::5]
 
         xx, yy = np.meshgrid(x, y)
 
@@ -104,15 +102,16 @@ class Crystal(object):
         self.phi_hyperbolic = -2*np.pi * self.L*10**-6 * self.birefringence / ( 4 * ((self.ne + self.no)/2)**2 * self.wavelength*10**-6 * (self.focal_length*10**-6)**2 )
         return self.phi_hyperbolic
 
-#
-# #EXAMPLE
+
+#EXAMPLE
 # nx = 1024
 # ny = 1024
 # pixel_size = 20*10**-6
 # wavelength = 660*10**-9
-# crystal_thickness = 0.15
+# crystal_thickness = 16*10**-3
 # cut_angle = 45.
 # optic_axis = 90. #(ie. the crystal optical axis is vertical)
 #
 # #Everything must be given in meters, angles in degrees.
-# delay_plate = Crystal(wavelength=wavelength, thickness=crystal_thickness, cut_angle=cut_angle, name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=optic_axis)
+#
+# delay_plate = Crystal(wavelength=wavelength, thickness=crystal_thickness, cut_angle=cut_angle, name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=optic_axis, two_dimensional=False)

@@ -1,5 +1,5 @@
 import numpy as np
-from Model.Physics_Constants import Constants, Conversions
+from Model.Constants import Constants, Conversions
 
 constants = Constants()
 conversion = Conversions()

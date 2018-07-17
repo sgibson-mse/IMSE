@@ -6,11 +6,11 @@ from scipy.interpolate import interp1d
 from scipy import interp
 
 #Internal imports
-from Model.bbo_model import AlphaBBO
+from Model.Crystal import Crystal
 from Model.read_fullenergy import ChannelFull, ResolutionFull, SpectralDataFull
 from Model.read_halfenergy import ResolutionHalf, SpectralDataHalf
 from Model.read_thirdenergy import ResolutionThird, SpectralDataThird
-from Model.Physics_Constants import Constants
+from Model.Constants import Constants
 
 SMALL_SIZE = 12
 MEDIUM_SIZE = 16
@@ -44,19 +44,19 @@ def get_stokes_components(spectral_data, resolution):
     linearly_polarised = np.zeros((shape[0], shape[2]))
 
     for i in range(len(stokes_full)):
-        linearly_polarised[i,:] = stokes_full[i,1,:] + stokes_full[i,2,:]
+        linearly_polarised[i,:] = np.sqrt(stokes_full[i,1,:]**2 + stokes_full[i,2,:]**2)
         #linearly_polarised[i,:] = linearly_polarised[i,:]/np.max(linearly_polarised[i,:])
 
-    plt.figure()
-    plt.title('Stokes components at R = {}m'.format("%.2f" % major_radius[1]))
-    plt.plot(wavelength_vector/10, sigma_stokes_full[1,0,:]/10**7, color='black', label='S0 Total Intensity')
-    plt.plot(wavelength_vector/10, linearly_polarised[1,:]/10**7, '--', color='red', label='Linearly polarised')
-    plt.plot(wavelength_vector/10, sigma_stokes_full[1,3,:]/10**7, '-.', color='blue', label='Circularly Polarised')
-    plt.legend(prop={'size': 10})
-    plt.xlim(659.2,659.8)
-    plt.xlabel('Wavelength (nm)')
-    plt.ylabel('Intensity [10$^{7}$photons/s]')
-    plt.show()
+    # plt.figure()
+    # plt.title('Stokes components at R = {}m'.format("%.2f" % major_radius[1]))
+    # plt.plot(wavelength_vector/10, sigma_stokes_full[1,0,:]/10**7, color='black', label='S0 Total Intensity')
+    # plt.plot(wavelength_vector/10, linearly_polarised[1,:]/10**7, '--', color='red', label='Linearly polarised')
+    # plt.plot(wavelength_vector/10, sigma_stokes_full[1,3,:]/10**7, '-.', color='blue', label='Circularly Polarised')
+    # plt.legend(prop={'size': 10})
+    # plt.xlim(659.2,659.8)
+    # plt.xlabel('Wavelength (nm)')
+    # plt.ylabel('Intensity [10$^{7}$photons/s]')
+    # plt.show()
 
     return major_radius, stokes_full, wavelength_vector, linearly_polarised
 
@@ -90,9 +90,11 @@ def define_crystals(wavelength_vector, delay_thickness, delay_cut_angle, displac
     :param displacer_cut_angle: Displacer plate cut angle in degrees
     :return: Separate instances of the AlphaBBO class - parameters for the displacer and delay plates.
     """
+    delay = Crystal(wavelength=wavelength_vector, thickness=delay_thickness, cut_angle=delay_cut_angle, name='alpha_bbo',
+                    nx=21, ny=21, pixel_size=20 * 10 ** -6, orientation=90, two_dimensional=False)
 
-    delay = AlphaBBO(wavelength_vector, thickness=delay_thickness, cut_angle=delay_cut_angle, alpha=7)
-    displacer = AlphaBBO(wavelength_vector, thickness=displacer_thickness, cut_angle=displacer_cut_angle, alpha=7)
+    displacer = Crystal(wavelength=wavelength_vector, thickness=displacer_thickness, cut_angle=displacer_cut_angle, name='alpha_bbo',
+                          nx=21, ny=21, pixel_size=20*10**-6, orientation=90, two_dimensional=False)
 
     return delay, displacer
 
@@ -226,7 +228,7 @@ def design_filter_2(alpha, lambda_0, n_material, tilt_angle, wavelength_vector_1
 
     fwhm_val = find_fwhm(x_vals, cavity_filter)
 
-    lambdas = lambda_0 * np.sqrt(1 - (constants.n_air / n_material) ** 2 * (np.sin(alpha + tilt_angle) ** 2))
+    lambdas = lambda_0 * np.sqrt(1 - (constants.n_air / n_material) ** 2 * (np.sin((alpha + tilt_angle)*(np.pi/180.)) ** 2))
 
     interp_transmittance = []
 
@@ -241,37 +243,10 @@ def design_filter_2(alpha, lambda_0, n_material, tilt_angle, wavelength_vector_1
 
     return interp_transmittance, lambda_nm
 
-def plot_cut_angle(contrasts, displacer_cut_angle, major_radius):
-
-    pp,ll = np.meshgrid(displacer_cut_angle,major_radius)
-
-    levels=np.arange(0,0.43,0.05)
-
-    plt.figure()
-    plt.title('Displacer plate = 3mm, Delay = 15mm')
-    plt.pcolormesh(ll,pp,contrasts,shading='gouraud')
-    cbar = plt.colorbar()
-    cbar.set_label('Contrast', rotation=90)
-    plt.xlabel('Major Radius [m]')
-    plt.ylabel('Cut angle $\Theta$ [degrees]')
-    plt.show()
-
-    plt.figure()
-    plt.title('Displacer plate = 3mm, Delay plate = 15mm')
-    CS =plt.contour(ll,pp,contrasts, levels=levels)
-    plt.clabel(CS, inline=1, fontsize=10)
-    cbar2 = plt.colorbar()
-    plt.xlabel('Major Radius [m]')
-    plt.ylabel('Cut angle $\Theta$ [degrees]')
-    cbar2.set_label('Contrast', rotation=90)
-    plt.show()
-
-    return
-
 delay_thickness = 15000.
 delay_cut_angle = 0.
 
-displacer_cut_angle= np.arange(0.,90.,1)
+displacer_cut_angle = np.arange(0.,90.,1)
 displacer_thickness = 3000
 
 # define a central wavelength for the filter - the middle of our wavelength array for now
@@ -296,8 +271,6 @@ major_radius_1, stokes_1, wavelength_vector_1, linearly_polarised_1 = get_stokes
 contrasts, total_polarised, phi_total = find_optimal_delay_thickness(wavelength_vector_1, stokes_1, channel_full)
 alpha, beta, pixel_xpositions, effective_focal_length = angle_of_incidence()
 
-# plot_cut_angle(contrasts, displacer_cut_angle, major_radius_1)
-#
 # calc_fringe_frequency(wavelength_vector_1,displacer_cut_angle)
 
 
@@ -360,8 +333,8 @@ def plot_half_energy_component():
 
     return interp_transmittance_half, lambda_half
 
-ll, r, interp_transmittance_full, lambda_nm = plot_full_energy_component(channel_full, resolution_full, spectral_full)
-interp_transmittance_half, lambda_half = plot_half_energy_component()
+#ll, r, interp_transmittance_full, lambda_nm = plot_full_energy_component(channel_full, resolution_full, spectral_full)
+#interp_transmittance_half, lambda_half = plot_half_energy_component()
 
 #Plotting code
 

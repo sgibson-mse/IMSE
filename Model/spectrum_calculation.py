@@ -1,5 +1,5 @@
 """
-This code calculates the Doppler shifted emission wavelengths given some specific beam parameters, specified in Beam_Parameters.py.
+This code calculates the Doppler shifted emission wavelengths given some specific beam parameters, specified in beam_parameters.py.
 It then calculates the relative intensities of the polarised and unpolarised light using a very basic model (delta function linewidths).
 It also calculates the stark splitting and returns the stark split wavelengths.
 """
@@ -11,15 +11,13 @@ import matplotlib.pyplot as plt
 
 # Internal imports
 
-from Model.Physics_Constants import Constants, Conversions
-from Model.Beam_Parameters import Beam
-from Model.View import CollectionOptics
-from Model.bbo_model import AlphaBBO
+from Model.Constants import Constants, Conversions
+from Model.beam_parameters import Beam
+from Model.Crystal import Crystal
 
 beam = Beam()
 conversion = Conversions()
 constant = Constants() #physics constant
-optics = CollectionOptics()
 
 SMALL_SIZE = 12
 MEDIUM_SIZE = 16
@@ -106,12 +104,12 @@ def calc_doppler_shift():
     major_radius = distance_to_beam
     lambda_doppler = np.array(lambda_doppler)
 
-    plt.figure()
-    plt.plot(lambda_doppler*10**9,major_radius)
-    plt.ylim(0.8,1.5)
-    plt.xlabel('Wavelength $\lambda$ (nm)')
-    plt.ylabel('Major Radius (m)')
-    plt.show()
+    # plt.figure()
+    # plt.plot(lambda_doppler*10**9,major_radius)
+    # plt.ylim(0.8,1.5)
+    # plt.xlabel('Wavelength $\lambda$ (nm)')
+    # plt.ylabel('Major Radius (m)')
+    # plt.show()
 
     return major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points
 
@@ -193,23 +191,27 @@ def add_delay(I_polarised, I_unpolarised, lambda_stark):
     I_total = abs(I_polarised) + I_unpolarised
 
     contrast = []
+    phi = []
+    I = []
 
     for i in range(len(I_polarised[-1])):
 
         wavelength = lambda_stark[:,i]
 
-        bbo = AlphaBBO(wavelength, thickness=18000, cut_angle=45)
+        bbo = Crystal(wavelength=wavelength, thickness=0.018, cut_angle=45., name='alpha_bbo', nx=21, ny=1, pixel_size=0.006, orientation=90., two_dimensional=False)
 
         Intensity_displacer = I_polarised[:,i] * np.exp(1j*bbo.phi_0)
 
         contrast.append(abs(np.sum(Intensity_displacer))/np.sum(I_total[:,i]))
+        phi.append(bbo.phi_0)
+        I.append(Intensity_displacer)
 
-    return contrast, bbo
+    return contrast, phi, I
 
 major_radius, lambda_doppler, beam_axis, emission_vectors, R_duct, R_tangency, sample_points  = calc_doppler_shift()
 E, E_vector = calculate_Efield(sample_points, beam_axis)
 I_polarised, I_unpolarised, lambda_stark = calculate_intensities(E, E_vector, lambda_doppler, emission_vectors)
-contrast,bbo = add_delay(I_polarised, I_unpolarised, lambda_stark)
+contrast, phi, I = add_delay(I_polarised, I_unpolarised, lambda_stark)
 
 class Spectrum(object):
 
@@ -226,15 +228,37 @@ class Spectrum(object):
         self.I_polarised = I_polarised
         self.I_unpolarised = I_unpolarised
         self.contrast = contrast
+        self.phi = np.array([phi])[0,:,:]
+        self.I = np.array([I])[0,:,:]
+
+    def plot_spectrum(self):
+        plt.figure()
+        markerline, stemlines, baseline = plt.stem(self.lambda_stark[:, 1000] * 10 ** 9, self.I_polarised[:, 1000],
+                                                   linefmt='--', markerfmt=' ')
+        plt.setp(baseline, color='black', linewidth=2)
+        plt.setp(stemlines[0:3], color='blue')
+        plt.setp(stemlines[6:9], color='blue')
+        plt.setp(stemlines[3:6], color='red')
+        plt.ylabel('Intensity')
+        plt.xlabel('Wavelength (nm)')
+        plt.show()
+
+    def plot_contrast(self):
+        plt.figure()
+        plt.plot(self.major_radius, self.contrast)
+        plt.ylabel('Contrast')
+        plt.xlabel('Major radius [m]')
+        plt.show()
+
+    def plot_delay(self):
+        plt.figure()
+        plt.plot(self.phi[:,3])
+        plt.plot(self.phi[:,1])
+        plt.show()
 
 spectrum = Spectrum()
 
-plt.figure()
-markerline, stemlines, baseline = plt.stem(spectrum.lambda_stark[:,1000]*10**9, spectrum.I_polarised[:,1000], linefmt='--', markerfmt=' ')
-plt.setp(baseline, color='black', linewidth=2)
-plt.setp(stemlines[0:3], color='blue')
-plt.setp(stemlines[6:9], color='blue')
-plt.setp(stemlines[3:6], color='red')
-plt.ylabel('Intensity')
-plt.xlabel('Wavelength (nm)')
-plt.show()
+#spectrum.plot_contrast()
+#spectrum.plot_delay()
+
+
