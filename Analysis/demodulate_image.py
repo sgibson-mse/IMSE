@@ -140,21 +140,21 @@ central_offsets = phase_diff[:,center_y, center_x]*(180./np.pi)
 
 rotary_stage_angles = np.arange(0,190,10)
 
-plt.figure()
-plt.plot(rotary_stage_angles, central_offsets/4.)
-plt.show()
-
-plt.figure()
-plt.imshow(phase_diff[0,:,:]*(180/np.pi))
-plt.colorbar()
-plt.clim(-12,+12)
-plt.show()
+# plt.figure()
+# plt.plot(rotary_stage_angles, central_offsets/4.)
+# plt.show()
+#
+# plt.figure()
+# plt.imshow(phase_diff[0,:,:]*(180/np.pi))
+# plt.colorbar()
+# plt.clim(-12,+12)
+# plt.show()
 
 def plot_image(image):
 
     plt.figure()
     plt.title('Ne $\lambda$ = 600nm, Calibration Image $\phi_{45^{\circ}}$')
-    plt.imshow(image.T)
+    plt.imshow(image.T, cmap='gray')
     cbar = plt.colorbar()
     cbar.ax.set_ylabel('Normalised Intensity', rotation=90)
     plt.xlabel('x pixels')

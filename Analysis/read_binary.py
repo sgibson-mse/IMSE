@@ -1,7 +1,6 @@
 import numpy as np
 
 #Read a .dat binary file which contains images from the IMSE diagnostic system.
-import matplotlib.pyplot as plt
 
 def load_binary(filename, FLC):
 
@@ -17,8 +16,8 @@ def load_binary(filename, FLC):
 
         header = np.fromfile(f, dtype=np.int16, count=2)
 
-        nx = header[0] #.astype(np.uint32) #change these to 32 bit assigned integers
-        ny = header[1]#.astype(np.uint32)
+        nx = header[0]
+        ny = header[1]
 
         header_32bit = np.fromfile(f, dtype=np.int32, count=2)
 

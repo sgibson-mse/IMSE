@@ -15,7 +15,6 @@ def get_images(filename):
 def prepare_image(images, frame):
     image = images[:, :, frame]
     image = image/np.max(image)
-
     return image
 
 def center_points(image):
@@ -66,16 +65,6 @@ def filter_image(mask, shift_image):
     filtered_image = shift_image*mask
 
     ifft_image = np.fft.ifft2(filtered_image)
-
-    # plt.figure()
-    # plt.imshow(np.log10(abs(filtered_image)))
-    # plt.colorbar()
-    # plt.show()
-
-    #
-    # plt.figure()
-    # plt.imshow(abs(ifft_image))
-    # plt.show()
 
     phase = np.arctan2(ifft_image.imag, ifft_image.real)
 
@@ -146,41 +135,40 @@ def calculate_phase(n_frames, filename, frame):
 def linear_fit(x, m, c):
     return m*x + c
 
-def calculate_offset(ny, nx, phase_diff):
+def calculate_offset(ny, nx, phase_diff, start, end,flip):
 
     center_y = np.round((ny - 1) / 2).astype(np.int)
     center_x = np.round((nx - 1) / 2).astype(np.int)
 
     central_offsets = phase_diff[:,center_y, center_x]*(180./np.pi)
 
-    rotary_stage_angles = np.arange(0,190,10)
+    rotary_stage_angles = np.arange(0,180,10)
 
     #Do a fit to calculate the offset!
 
-    phase_offsets = central_offsets[0:7] #take first points before the phase jump
-    polariser_angles = rotary_stage_angles[0:7]
+    phase_offsets = central_offsets[start:end] #take first points before the phase jump
+    polariser_angles = rotary_stage_angles[start:end]
+
+    plt.figure()
+    plt.plot(polariser_angles, phase_offsets)
+    plt.show()
 
     guess = [1,1]
     popt, pcov = curve_fit(linear_fit, polariser_angles, phase_offsets, p0 = guess)
     y_fit = popt[0]*polariser_angles + popt[1]
-    offset = popt[1]/4
-    print('Fitted offset is,', popt[1]/4)
+    offset = (popt[1]/4)+flip
+    print('Fitted offset is,', (popt[1]/4)+flip)
     print('Gradient is', popt[0])
 
-    return polariser_angles, phase_offsets, y_fit, offset
+    return polariser_angles, phase_offsets, y_fit, offset, central_offsets, rotary_stage_angles
 
 def offset_from_reference(phase_diff, nx, ny, n_frames):
 
     reference_image = phase_diff[0,:,:]
     offset_images = np.zeros((int(n_frames/2), ny, nx))
 
-    print(phase_diff.shape)
-    print(offset_images.shape)
-
     for i in range(int(n_frames/2)-1):
         offset_images[i,:,:] = phase_diff[i,:,:] - reference_image
-
-    #offset_images = offset_images[0::2,:,:]
 
     return offset_images
 
@@ -191,9 +179,15 @@ def calculate_offset_from_reference(ny, nx, offset_images):
 
     central_offsets = offset_images[:,center_y, center_x]*(180./np.pi)
 
+    print(central_offsets.shape)
+
     rotary_stage_angles = np.arange(0,190,10)
 
-    print(rotary_stage_angles)
+    plt.figure()
+    plt.plot(rotary_stage_angles, central_offsets, 'x')
+    plt.ylabel('4 $\Theta_{out}$ - $\Theta_{polariser}$')
+    plt.xlabel('$\Theta_{polariser}$')
+    plt.show()
 
     #Do a fit to calculate the offset!
 
@@ -207,19 +201,20 @@ def calculate_offset_from_reference(ny, nx, offset_images):
     print('Fitted offset is,', popt[1]/4)
     print('Gradient is', popt[0])
 
-    return polariser_angles, phase_offsets, y_fit
+    return polariser_angles, phase_offsets, y_fit, central_offsets, rotary_stage_angles
 
 def plot_spectrogram(image_fft):
     plt.figure()
-    plt.imshow(np.fft.fftshift(np.log10(abs(image_fft))))
+    plt.imshow(np.log10(abs(np.fft.fftshift(image_fft.T))))
+    plt.clim(0,6)
     plt.colorbar()
     plt.show()
 
 def plot_image(image):
 
     plt.figure()
-    plt.title('Ne $\lambda$ = 600nm, Calibration Image $\phi_{45^{\circ}}$')
-    plt.imshow(image.T)
+    plt.title('Ne $\lambda$ = 600nm')
+    plt.imshow(image.T, cmap='gray')
     cbar = plt.colorbar()
     cbar.ax.set_ylabel('Normalised Intensity', rotation=90)
     plt.xlabel('x pixels')
@@ -228,44 +223,65 @@ def plot_image(image):
 
     return
 
-ny=1280
-nx=1080
-n_frames = 38
+def plot_phase_diff(phase_diff):
+    plt.figure()
+    plt.title('Ne $\lambda$ = 600nm')
+    plt.imshow(phase_diff[0,:,:])
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel('Phase (Radians)', rotation=90)
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.show()
+    return
+
+def plot_image_slice(image):
+    plt.figure()
+    plt.title('Ne $\lambda$ = 600nm')
+    plt.plot(image[500,:])
+    plt.xlabel('X pixels')
+    plt.ylabel('Intensity')
+    plt.show()
+    return
+
+ny= 1280
+nx= 1080
+n_frames = 37
 frame = np.arange(0,38,1)
+
 filename = str(os.getcwd()) + '/sam_8.dat'
 
 phases, phase_diff = calculate_phase(n_frames, filename, frame)
-polariser_angles, phase_offsets, y_fit, offset = calculate_offset(ny, nx, phase_diff)
+
+polariser_angles_set1, phase_offsets_set1, y_fit_set1, offset_set1,  central_offsets_set1, rotary_stage_angles_set1 = calculate_offset(ny, nx, phase_diff, start=0, end=7, flip=0)
+polariser_angles_set2, phase_offsets_set2, y_fit_set2, offset_set2,  central_offsets_set2, rotary_stage_angles_set2 = calculate_offset(ny, nx, phase_diff, start=8, end=13, flip=np.pi/2)
+polariser_angles_set3, phase_offsets_set3, y_fit_set3, offset_set3,  central_offsets_set3, rotary_stage_angles_set3 = calculate_offset(ny, nx, phase_diff, start=14, end=18, flip=np.pi)
 
 #Calculate the offset using the first FLC state image as a reference
 
 #offset_images = offset_from_reference(phase_diff, nx, ny, n_frames)
 #polariser_angles, phase_offsets, y_fit = calculate_offset_from_reference(ny, nx, offset_images)
 
-residual_offset = (phase_offsets/4 - polariser_angles) - offset
+residual_offset_1 = (phase_offsets_set1/4 - polariser_angles_set1) - offset_set1
+residual_offset_2 = (phase_offsets_set2/4 - polariser_angles_set2) - offset_set2
+residual_offset_3 = (phase_offsets_set3/4 - polariser_angles_set3) - offset_set3
 
 plt.figure()
-plt.plot(residual_offset, 'x')
-plt.ylabel('4 $\Theta$ data - 4 $\ Theta$ input')
-plt.xlabel('Frame')
+plt.plot(residual_offset_1)
+plt.plot(residual_offset_2+np.pi/2)
+plt.plot(residual_offset_3+np.pi)
 plt.show()
 
 plt.figure()
-plt.plot(polariser_angles, y_fit/4, '--', label='fitted')
-plt.plot(polariser_angles, phase_offsets/4, 'x', label='Data')
+plt.plot(polariser_angles_set1, y_fit_set1/4, '--', label='fitted')
+plt.plot(polariser_angles_set1, phase_offsets_set1/4, 'x', label='Data')
 plt.xlabel('Polariser angle (degrees)')
 plt.ylabel('Phase offset (degrees)')
 plt.legend()
 plt.show()
 #
 #
-# # plt.figure()
-# # plt.plot(rotary_stage_angles, central_offsets/4, 'x')
-# # plt.xlabel('Polariser Angle (degrees)')
-# # plt.ylabel('Phase offset at image center (degrees)')
-# # plt.show()
-#
-# plt.figure()
-# plt.imshow(phases[:,:,3]-phases[:,:,2])
-# plt.colorbar()
-# plt.show()
+plt.figure()
+plt.plot(rotary_stage_angles_set1, central_offsets_set1/4, 'x')
+plt.xlabel('Polariser Angle (degrees)')
+plt.ylabel('Phase offset at image center (degrees)')
+plt.show()
