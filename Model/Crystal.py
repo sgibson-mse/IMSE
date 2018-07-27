@@ -59,8 +59,8 @@ class Crystal(object):
 
     def non_axial_rays(self):
 
-        x = np.arange(-int(self.nx / 2)+0.5, int(self.nx / 2), 1) * self.pixel_size
-        y = np.arange(-int(self.ny / 2)+0.5, int(self.ny / 2), 1) * self.pixel_size
+        x = np.arange(-int(self.nx / 2) + 0.5, int(self.nx / 2), 1) * self.pixel_size
+        y = np.arange(-int(self.ny / 2) + 0.5, int(self.ny / 2), 1) * self.pixel_size
 
         xx, yy = np.meshgrid(x, y)
 

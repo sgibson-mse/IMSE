@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.interpolate import interp2d, interp1d
 from Model.graph_format import plot_format
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 plot_format()
 
@@ -59,8 +60,8 @@ def demodulate_image(image):
 
     shift_image = get_carrier_frequency(window_image)
 
-    mask = box_filter(image, x_size=int(len(image)), y_size=80, centre=[int(len(image)/2),430]) #box_filter(shift_image, x_size = int(len(image)), y_size=35, centre=[int(len(image)/2),23])
-    dc_mask = box_filter(image, x_size=int(len(image)), y_size=80, centre=[int(len(image)/2), int(len(image)/2)])
+    mask = box_filter(image, x_size=int(len(image)), y_size=25, centre=[int(len(image)/2),430]) #box_filter(shift_image, x_size = int(len(image)), y_size=35, centre=[int(len(image)/2),23])
+    dc_mask = box_filter(image, x_size=int(len(image)), y_size=25, centre=[int(len(image)/2), int(len(image)/2)])
 
     phase, amplitude = filter_image(mask, shift_image)
 
@@ -76,7 +77,7 @@ def normalize(v):
        return v
     return v / norm
 
-def msesim_profiles():
+def msesim_profiles(npx):
     # Load input from msesim
     msesim = load_msesim_spectrum()
     stokes = msesim["total_stokes"]
@@ -85,17 +86,17 @@ def msesim_profiles():
     msesim_S1 = np.sum(stokes[:, 1, :], axis=1)
 
     msesim_gamma = 0.5 * np.arctan(msesim_S2 / msesim_S1)
-    msesim_gamma = msesim_gamma.reshape(21, 21)
+    msesim_gamma = msesim_gamma.reshape(npx, npx)
 
     nx = 1024
     ny= 1024
-    pixel_size = 20*10**-6
+    pixel_size = 20*10**-3
 
-    x = np.arange(+0.5-int(nx/2), int(nx/2), 1)*pixel_size
-    y = np.arange(+0.5-int(ny/2), int(ny/2), 1)*pixel_size
+    x = np.arange(-int(nx/2), int(nx/2)+1, 1)*pixel_size
+    y = np.arange(-int(ny/2), int(ny/2)+1, 1)*pixel_size
 
-    x_small = x[::50]
-    y_small = y[::50]
+    x_small = np.linspace(-10.23,10.23,npx)
+    y_small = np.linspace(-10.23,10.23,npx)
 
     gamma_interp = interp2d(x_small, y_small, msesim_gamma, kind='cubic')
 
@@ -105,14 +106,16 @@ def msesim_profiles():
     xyz0 = msesim["central_coordinates"]
     c_xyz = msesim["collection_lens_coordinates"]
 
-    xyz_grid = xyz0.reshape(21,21,3)
+    xyz_grid = xyz0.reshape(npx,npx,3)
 
     R_vector = msesim["resolution_vector(R)"]
-    R_grid = R_vector.reshape(21,21,7)
+    R_grid = R_vector.reshape(npx,npx,7)
     R_vals = R_grid[:,:,2]
 
-    R_interp = interp2d(x_small, y_small, R_vals)
-    R = R_interp(x,y)
+    R_vals = R_vals[16,:]
+
+    R_interp = interp1d(x_small, R_vals, kind='linear', fill_value='extrapolate')
+    R = R_interp(x)
 
     return gamma, R
 
@@ -135,10 +138,10 @@ def demodulate_fw_images():
 
     return image_1_fw, image_2_fw, polarisation_fw
 
-def demodulate_nfw_images():
+def demodulate_nfw_images(image_1, image_2):
 
-    image_1 = load_image(filename='image_FLC1_quintic.hdf')
-    image_2 = load_image(filename='image_FLC2_quintic.hdf')
+    # image_1 = load_image(filename='synthetic_image1_32x32.hdf')
+    # image_2 = load_image(filename='synthetic_image2_32x32.hdf')
 
     #Demodulate images
 
@@ -146,51 +149,8 @@ def demodulate_nfw_images():
     phase_90, contrast_90, dc_amplitude_90 = demodulate_image(image_2)
 
     #Calculate polarisation angle
-    polarisation_angle = phase_45 - phase_90
+    polarisation_angle = phase_90 - phase_45
 
     polarisation = phase_mod(polarisation_angle, 2*np.pi)/4.
 
     return image_1, image_2, polarisation
-
-# gamma, R = msesim_profiles()
-# image_1_fw, image_2_fw, polarisation_fw = demodulate_fw_images()
-# image_1, image_2, polarisation = demodulate_nfw_images()
-#
-#
-# plt.figure()
-# plt.title('No field widening')
-# plt.subplot(211)
-# plt.imshow(polarisation*(180./np.pi))
-# plt.gca().invert_yaxis()
-# plt.gca().invert_xaxis()
-# plt.colorbar()
-#
-# plt.subplot(212)
-# plt.imshow(polarisation_fw*(180./np.pi))
-# plt.gca().invert_yaxis()
-# plt.gca().invert_xaxis()
-# plt.colorbar()
-# plt.show()
-#
-# plt.figure()
-# plt.plot(R[int(len(image_1)/2),:], -1*polarisation[int(len(image_1)/2),:]*(180./np.pi), label='demodulated, no field widening')
-# plt.plot(R[int(len(image_1_fw)/2),:], -1*polarisation_fw[int(len(image_1_fw)/2),:]*(180./np.pi), label='demodulated, field widening')
-# plt.plot(R[int(len(image_1)/2),:], gamma[int(len(image_1)/2),:]*(180./np.pi), '--', label='msesim output')
-# plt.legend()
-# plt.show()
-
-# plt.figure()
-# plt.plot(image_2.iloc[500,:].values, color='black', label='No field widening')
-# plt.plot(image_1.iloc[500,:].values, color='red', label='Field widening')
-# plt.xlabel('X pixel')
-# plt.ylabel('Intensity [ph/s]')
-# plt.legend(loc=1, prop={'size': 20})
-# plt.show()
-
-#
-# plt.figure()
-# plt.imshow(contrast_45)
-# plt.gca().invert_xaxis()
-# plt.colorbar()
-# plt.clim(0.1,0.5)
-# plt.show()

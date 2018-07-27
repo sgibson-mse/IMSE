@@ -1,9 +1,10 @@
 import idlbridge as idl
+import numpy as np
+from scipy.interpolate import interp2d
 
 def load_msesim_spectrum():
     idl.execute(
-        "restore, '/home/sam/Desktop/msesim/runs/mast_imse_2d_f85mm/output/data/density2e19_MAST_photron_2d.dat' , /VERBOSE")
-
+        "restore, '/home/sgibson/PycharmProjects/msesim/runs/imse_2d_32x32_centerpixel/output/data/MAST_18501_imse.dat', /VERBOSE")
     data = {}
 
     key_names = ("xyz0", "B_v0", "B_xyz", "B_w", "B_vec",
@@ -41,3 +42,38 @@ def load_msesim_spectrum():
         data[object_name] = idl.get(key_name)
 
     return data
+
+# data = load_msesim_spectrum()
+#
+# stokes_total = np.array(data["total_stokes"])
+#
+# stokes_total = stokes_total.reshape(32,32,4,544)
+# stokes_total = stokes_total[:,:,0,:]
+#
+# x = np.arange(-10.23, 10.25, 0.02)
+# y = np.arange(-10.23, 10.25, 0.02)
+#
+# x_small = np.linspace(-10.23,10.23,32)
+# y_small = np.linspace(-10.23,10.23,32)
+#
+# wavelength = data["wavelength_vector"]
+# wavelength = wavelength * 10 ** -10  # convert to m
+#
+# print(wavelength)
+#
+# S_total = np.zeros((len(x), len(y), len(wavelength)))
+#
+# for i in range(len(wavelength)):
+#     S0_interp = interp2d(x_small, y_small, stokes_total[:,:,i], kind='linear')
+#     S0 = S0_interp(x, y)
+#     S_total[:,:,i] = S0
+#
+# tsh_image = np.sum(S_total, axis=2)
+#
+# import matplotlib.pyplot as plt
+#
+# plt.figure()
+# plt.imshow(tsh_image)
+# plt.legend()
+# plt.show()
+

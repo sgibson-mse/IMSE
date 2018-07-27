@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def plot_format():
     SMALL_SIZE = 20
@@ -13,3 +14,4 @@ def plot_format():
     plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
     plt.rcParams.update({'errorbar.capsize': 2})
+

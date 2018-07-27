@@ -4,7 +4,6 @@ import numpy as np
 from scipy.interpolate import interp2d
 import pandas as pd
 
-
 from Model.Crystal import Crystal
 
 SMALL_SIZE = 12
@@ -22,7 +21,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 #idl.execute("restore, '/home/sam/Desktop/msesim/runs/mast_imse_2d/output/data/density1e19_MAST_photron_2d.dat' , /VERBOSE")
 
 def get_msesim_output():
-    idl.execute("restore, '/home/sam/Desktop/msesim/runs/mast_imse_2d_f85mm/output/data/density2e19_MAST_photron_2d.dat' , /VERBOSE")
+    idl.execute("restore, '/home/sgibson/PycharmProjects/msesim/runs/imse_2d_32x32_centerpixel/output/data/MAST_18501_imse.dat' , /VERBOSE")
 
     data = {}
 
@@ -67,20 +66,22 @@ def get_msesim_output():
     R = data["resolution_vector(R)"]
     R = R[:,0]
 
-    nx = 1024
+    nx =1024
     ny= 1024
     pixel_size = 20*10**-6
 
-    x = np.arange(+0.5-int(nx/2), int(nx/2), 1)*pixel_size
-    y = np.arange(+0.5-int(ny/2), int(ny/2), 1)*pixel_size
+    npx = 32
 
-    x_small = x[::50]
-    y_small = y[::50]
+    x = np.arange(-10.23, 10.25, 0.02)
+    y = np.arange(-10.23, 10.25, 0.02)
 
-    S0_small = stokes_total[:,0,:].reshape(21,21,len(wavelength)) #x,y,lambda
-    S1_small = stokes_total[:,1,:].reshape(21,21,len(wavelength)) #x,y,lambda
-    S2_small = stokes_total[:,2,:].reshape(21,21,len(wavelength))#x,y,lambda
-    S3_small = stokes_total[:,3,:].reshape(21,21,len(wavelength))#x,y,lambda
+    x_small = np.linspace(-10.23, 10.23, npx)
+    y_small = np.linspace(-10.23, 10.23, npx)
+
+    S0_small = stokes_total[:,0,:].reshape(npx,npx,len(wavelength)) #x,y,lambda
+    S1_small = stokes_total[:,1,:].reshape(npx,npx,len(wavelength)) #x,y,lambda
+    S2_small = stokes_total[:,2,:].reshape(npx,npx,len(wavelength))#x,y,lambda
+    S3_small = stokes_total[:,3,:].reshape(npx,npx,len(wavelength))#x,y,lambda
 
     return wavelength, nx, ny, pixel_size, x_small, y_small, S0_small, S1_small, S2_small, S3_small, x, y
 
@@ -104,15 +105,15 @@ def calculate_TSH_image(FLC_state):
         delay_plate = Crystal(wavelength=wavelength[i], thickness=0.015, cut_angle=0., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90., two_dimensional=True)
         displacer_plate = Crystal(wavelength=wavelength[i], thickness=0.003, cut_angle=45., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90.,two_dimensional=True )
 
-        #Interpolate our small 200x200 msesim grid to the real image size, 1024x1024
+        #Interpolate our small msesim grid to the real image size, 1024x1024
 
-        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='quintic')
+        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='linear')
         S0 = S0_interp(x,y)
 
-        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='quintic')
+        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='linear')
         S1 = S1_interp(x,y)
 
-        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='quintic')
+        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='linear')
         S2 = S2_interp(x,y)
 
         #Calculate the total intensity for a given wavelength, propagating stokes components through a delay plate and a displacer plate.
@@ -125,6 +126,7 @@ def calculate_TSH_image(FLC_state):
             print('FLC state is 2')
             S_total[:,:,i] = S0 + S1*np.sin((delay_plate.phi_total + displacer_plate.phi_total)) - S2*np.cos((delay_plate.phi_total + displacer_plate.phi_total))
 
+    print('save the image!')
     tsh_image = np.sum(S_total, axis=2)
 
     return tsh_image
@@ -286,13 +288,13 @@ def save_image(image, filename):
 def make_TSH_1():
     image_1 = calculate_TSH_image(FLC_state=1)
     print('Made image 1! Saving...')
-    save_image(image_1, filename="image_FLC1_quintic.hdf")
+    save_image(image_1, filename="synthetic_image1_32x32.hdf")
 
 def make_TSH_2():
     print('Making image 2...')
     image_2 = calculate_TSH_image(FLC_state=2)
     print('Image 2 complete! Saving...')
-    save_image(image_2, filename="image_FLC2_quintic.hdf")
+    save_image(image_2, filename="synthetic_image2_32x32.hdf")
 
 def make_ASH_images():
 
@@ -331,6 +333,11 @@ def make_ideal_TSH_2():
     ideal_2 = calculate_ideal_TSH(FLC_state=2)
     print('Made image 2! Saving...')
     save_image(ideal_2, filename="image_FLC2_ideal.hdf")
+
+
+make_TSH_1()
+make_TSH_2()
+
 
 
 # gamma_profile = np.sum(polarisation_angle, axis=2)
