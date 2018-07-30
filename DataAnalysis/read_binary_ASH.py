@@ -52,7 +52,7 @@ from scipy.optimize import curve_fit
 
 #calculate the offset between the polariser angle vs what we put in via rotary stage
 #
-# filename = '/home/sam/Desktop/Projects/IMSE-MSE/Analysis/sam_11.dat'
+# filename = '/home/sam/Desktop/Projects/IMSE-MSE/DataAnalysis/sam_11.dat'
 # images, step, theta0 = load_ashbinary(filename, FLC=False)
 #
 # n_frames = 37
@@ -61,7 +61,7 @@ from scipy.optimize import curve_fit
 # def fit(theta,a):
 #     return 0.25 + 0.25*np.cos(2*(-a+(3*np.pi/4.)-theta))
 #
-# bg, bgstep, bgtheta0 = load_ashbinary('/home/sam/Desktop/Projects/IMSE-MSE/Analysis/sam_12.dat', FLC=False)
+# bg, bgstep, bgtheta0 = load_ashbinary('/home/sam/Desktop/Projects/IMSE-MSE/DataAnalysis/sam_12.dat', FLC=False)
 #
 # image_slice =  images[1080,1180,:].astype(np.int32) - bg[1080,1180,:].astype(np.int32)
 #

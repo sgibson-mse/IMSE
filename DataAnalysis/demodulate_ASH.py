@@ -2,7 +2,7 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from Analysis.peak_find import indexes
+from DataAnalysis.peak_find import indexes
 from scipy.optimize import curve_fit
 from scipy.stats.mstats import gmean
 from scipy import signal
@@ -20,7 +20,7 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 #Internal imports
-from Analysis.read_binary_ASH import load_ashbinary
+from DataAnalysis.read_binary_ASH import load_ashbinary
 
 def get_images(filename):
     images, step, theta0 = load_ashbinary(filename=filename, FLC=False)
@@ -220,8 +220,8 @@ def demodulate(background, frame):
 
     return theta_ave
 
-filename ='/home/sam/Desktop/Projects/IMSE-MSE/Analysis/sam_13.dat'
-background ='/home/sam/Desktop/Projects/IMSE-MSE/Analysis/sam_12.dat'
+filename ='/home/sam/Desktop/Projects/IMSE-MSE/DataAnalysis/sam_13.dat'
+background ='/home/sam/Desktop/Projects/IMSE-MSE/DataAnalysis/sam_12.dat'
 
 images, step, theta0 = get_images(filename)
 background, background_step, background_theta0 = get_images(background)

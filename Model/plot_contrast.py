@@ -2,7 +2,7 @@ import numpy as np
 import idlbridge as idl
 import matplotlib.pyplot as plt
 
-from Model.graph_format import plot_format
+from Tools.Plotting.graph_format import plot_format
 from Model.read_fullenergy import ChannelFull, ResolutionFull, SpectralDataFull
 from Model.calculate_contrast_only import get_stokes_components, find_optimal_crystal, calc_fringe_frequency, angle_of_incidence, design_filter
 

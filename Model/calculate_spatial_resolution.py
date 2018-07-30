@@ -1,6 +1,5 @@
-from Model.load_msesim_output import load_msesim_spectrum
+from Tools.load_msesim_output import load_msesim_spectrum
 import numpy as np
-import matplotlib.pyplot as plt
 
 data = load_msesim_spectrum()
 

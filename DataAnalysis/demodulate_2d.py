@@ -2,11 +2,11 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from Analysis.peak_find import indexes
+from DataAnalysis.peak_find import indexes
 from scipy.optimize import curve_fit
 
 #Internal imports
-from Analysis.read_binary import load_binary
+from DataAnalysis.read_binary import load_binary
 
 def get_images(filename):
     images = load_binary(filename, FLC=True)

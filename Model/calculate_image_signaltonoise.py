@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from Model.demodulate_TSH_synthetic_image import demodulate_image, phase_mod, msesim_profiles
-from Model.graph_format import plot_format
+from Tools.Plotting.graph_format import plot_format
 from Model.Constants import Constants
 
 constants = Constants()
@@ -81,13 +81,13 @@ def poisson_noise(image_FLC1, image_FLC2):
 
     return mean, std, poisson_gamma
 
-# image_FLC1 = load_image(filename='/home/sgibson/PycharmProjects/IMSE/Model/synthetic_image1_32x32.hdf')
-# image_FLC2 = load_image(filename='/home/sgibson/PycharmProjects/IMSE/Model/synthetic_image2_32x32.hdf')
-# mean, std, poisson_gamma = poisson_noise(image_FLC1, image_FLC2)
-#
-# plt.figure()
-# plt.plot(R, gamma[512,:]*(180./np.pi), '--', color='red', label='msesim')
-# plt.plot(R[:-1], mean[512,:]*(180./np.pi), alpha=0.7)
-# plt.legend()
-# plt.show()
+image_FLC1 = load_image(filename='/home/sgibson/PycharmProjects/IMSE/Model/synthetic_image1_32x32.hdf')
+image_FLC2 = load_image(filename='/home/sgibson/PycharmProjects/IMSE/Model/synthetic_image2_32x32.hdf')
+mean, std, poisson_gamma = poisson_noise(image_FLC1, image_FLC2)
+
+plt.figure()
+plt.plot(R, gamma[512,:]*(180./np.pi), '--', color='red', label='msesim')
+plt.plot(R[:-1], mean[512,:]*(180./np.pi), alpha=0.7)
+plt.legend()
+plt.show()
 

@@ -1,13 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.interpolate import interp2d, interp1d
-from Model.graph_format import plot_format
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+from Tools.Plotting.graph_format import plot_format
 
 plot_format()
 
-from Model.load_msesim_output import load_msesim_spectrum
+from Tools.load_msesim_output import load_msesim_spectrum
 
 def load_image(filename):
     image_file = pd.HDFStore(filename)
@@ -60,8 +58,8 @@ def demodulate_image(image):
 
     shift_image = get_carrier_frequency(window_image)
 
-    mask = box_filter(image, x_size=int(len(image)), y_size=25, centre=[int(len(image)/2),430]) #box_filter(shift_image, x_size = int(len(image)), y_size=35, centre=[int(len(image)/2),23])
-    dc_mask = box_filter(image, x_size=int(len(image)), y_size=25, centre=[int(len(image)/2), int(len(image)/2)])
+    mask = box_filter(image, x_size=int(len(image)), y_size=20, centre=[int(len(image)/2),430]) #box_filter(shift_image, x_size = int(len(image)), y_size=35, centre=[int(len(image)/2),23])
+    dc_mask = box_filter(image, x_size=int(len(image)), y_size=20, centre=[int(len(image)/2), int(len(image)/2)])
 
     phase, amplitude = filter_image(mask, shift_image)
 

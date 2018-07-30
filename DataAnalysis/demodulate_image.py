@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 #Internal imports
-from Analysis.read_binary import load_binary
-from Analysis.peak_find import indexes
+from DataAnalysis.read_binary import load_binary
+from DataAnalysis.peak_find import indexes
 
 def prepare_image(filename, frames):
 

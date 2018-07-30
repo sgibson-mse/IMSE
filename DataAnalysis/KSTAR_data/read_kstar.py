@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
 
-from Analysis.KSTAR_data.demodulate_kstar_image import demodulate_image
+from DataAnalysis.KSTAR_data.demodulate_kstar_image import demodulate_image
 
 file_directory = '/mnt/cifs/sam/'
 structure_file = 'str_9034.sav'

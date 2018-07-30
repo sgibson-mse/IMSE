@@ -1,5 +1,5 @@
 """
-This code calculates the Doppler shifted emission wavelengths given some specific beam parameters, specified in beam_parameters.py.
+This code calculates the Doppler shifted emission wavelengths given some specific beam parameters, specified in Beam.py.
 It then calculates the relative intensities of the polarised and unpolarised light using a very basic model (delta function linewidths).
 It also calculates the stark splitting and returns the stark split wavelengths.
 """
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # Internal imports
 
 from Model.Constants import Constants, Conversions
-from Model.beam_parameters import Beam
+from Model.Beam import Beam
 from Model.Crystal import Crystal
 
 beam = Beam()
