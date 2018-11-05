@@ -1,27 +1,22 @@
 import idlbridge as idl
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp2d
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib import ticker
+
+# import matplotlib as matplotlib
+# matplotlib.use('Qt4Agg',warn=False, force=True)
+# import matplotlib.pyplot as plt
+# print("Switched to:",matplotlib.get_backend())
 
 from Model.Crystal import Crystal
+from Tools.Plotting.graph_format import plot_format
 
-SMALL_SIZE = 12
-MEDIUM_SIZE = 16
-BIGGER_SIZE = 18
-
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-
-#idl.execute("restore, '/home/sam/Desktop/msesim/runs/mast_imse_2d/output/data/density1e19_MAST_photron_2d.dat' , /VERBOSE")
+plot_format()
 
 def get_msesim_output():
-    idl.execute("restore, '/home/sgibson/PycharmProjects/msesim/runs/imse_2d_32x32_centerpixel/output/data/MAST_18501_imse.dat' , /VERBOSE")
+    idl.execute("restore, '/home/sgibson/PycharmProjects/msesim/runs/imse_2d_32x32_f80mm/output/data/MAST_18501_imse.dat' , /VERBOSE")
 
     data = {}
 
@@ -66,17 +61,16 @@ def get_msesim_output():
     R = data["resolution_vector(R)"]
     R = R[:,0]
 
-    nx =1024
+    nx = 1024
     ny= 1024
+    npx = 32
     pixel_size = 20*10**-6
 
-    npx = 32
+    x = np.arange(-10.24,10.242,0.02)
+    y = np.arange(-10.24,10.242,0.02)
 
-    x = np.arange(-10.23, 10.25, 0.02)
-    y = np.arange(-10.23, 10.25, 0.02)
-
-    x_small = np.linspace(-10.23, 10.23, npx)
-    y_small = np.linspace(-10.23, 10.23, npx)
+    x_small = np.linspace(-10.24,10.24,npx)
+    y_small = np.linspace(-10.24,10.24,npx)
 
     S0_small = stokes_total[:,0,:].reshape(npx,npx,len(wavelength)) #x,y,lambda
     S1_small = stokes_total[:,1,:].reshape(npx,npx,len(wavelength)) #x,y,lambda
@@ -103,17 +97,17 @@ def calculate_TSH_image(FLC_state):
         #Make the delay and displacer plate to find the phase shift for a given wavelength
 
         delay_plate = Crystal(wavelength=wavelength[i], thickness=0.015, cut_angle=0., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90., two_dimensional=True)
-        displacer_plate = Crystal(wavelength=wavelength[i], thickness=0.003, cut_angle=45., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90.,two_dimensional=True )
+        displacer_plate = Crystal(wavelength=wavelength[i], thickness=0.003, cut_angle=45., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90.,two_dimensional=True)
 
-        #Interpolate our small msesim grid to the real image size, 1024x1024
+        #Interpolate our small 200x200 msesim grid to the real image size, 1024x1024
 
-        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='linear')
+        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='quintic')
         S0 = S0_interp(x,y)
 
-        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='linear')
+        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='quintic')
         S1 = S1_interp(x,y)
 
-        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='linear')
+        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='quintic')
         S2 = S2_interp(x,y)
 
         #Calculate the total intensity for a given wavelength, propagating stokes components through a delay plate and a displacer plate.
@@ -126,7 +120,6 @@ def calculate_TSH_image(FLC_state):
             print('FLC state is 2')
             S_total[:,:,i] = S0 + S1*np.sin((delay_plate.phi_total + displacer_plate.phi_total)) - S2*np.cos((delay_plate.phi_total + displacer_plate.phi_total))
 
-    print('save the image!')
     tsh_image = np.sum(S_total, axis=2)
 
     return tsh_image
@@ -154,17 +147,17 @@ def calculate_ASH_image(circular):
         displacer_plate = Crystal(wavelength=wavelength[i], thickness=0.003, cut_angle=45., name='alpha_bbo', nx=nx,
                                   ny=ny, pixel_size=pixel_size, orientation=90., two_dimensional=True)
 
-        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='cubic')
+        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='linear')
         S0 = S0_interp(x, y)
 
-        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='cubic')
+        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='linear')
         S1 = S1_interp(x, y)
 
-        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='cubic')
+        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='linear')
         S2 = S2_interp(x, y)
 
         if circular == True:
-            S3_interp = interp2d(x_small, y_small, S3_small[:, :, i], kind='cubic')
+            S3_interp = interp2d(x_small, y_small, S3_small[:, :, i], kind='linear')
             S3 = S3_interp(x, y)
 
             S_total[:, :, i] = 2 * S0 + 2 * S2 * np.cos(delay_plate.phi + displacer_plate.phi) + S1 * (
@@ -206,13 +199,13 @@ def calculate_field_widened_TSH(FLC_state):
 
         #Interpolate our small msesim grid to the real image size, 1024x1024
 
-        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='quintic')
+        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='linear')
         S0 = S0_interp(x,y)
 
-        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='quintic')
+        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='linear')
         S1 = S1_interp(x,y)
 
-        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='quintic')
+        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='linear')
         S2 = S2_interp(x,y)
 
         #Calculate the total intensity for a given wavelength, propagating stokes components through a delay plate and a displacer plate.
@@ -241,6 +234,10 @@ def calculate_ideal_TSH(FLC_state):
 
     S_total = np.zeros((len(x), len(y), len(wavelength)))
 
+    contrast = np.zeros((len(x), len(y), len(wavelength)), dtype='complex')
+    phase = np.zeros((len(x), len(y), len(wavelength)))
+    S0 = np.zeros((len(x), len(y), len(wavelength)))
+
     print('Calculating TSH synthetic image...')
 
     for i in range(len(wavelength)):
@@ -252,7 +249,7 @@ def calculate_ideal_TSH(FLC_state):
         #Interpolate our small 200x200 msesim grid to the real image size, 1024x1024
 
         S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='quintic')
-        S0 = S0_interp(x,y)
+        S0[:,:,i] = S0_interp(x,y)
 
         S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='quintic')
         S1 = S1_interp(x,y)
@@ -264,15 +261,64 @@ def calculate_ideal_TSH(FLC_state):
 
         if FLC_state == 1:
             print('FLC state is 1')
-            S_total[:,:,i] = np.exp(1j * (delay_plate.phi_total + displacer_plate.phi_total)) * (S1 + (S2/1j))
+            S_total = np.exp(1j * (delay_plate.phi_total + displacer_plate.phi_total)) * (S1 + (S2/1j))
+            contrast[:,:,i] = S_total
+            phase[:,:,i] = np.arctan2(S_total.imag, S_total.real)
 
         else:
             print('FLC state is 2')
-            S_total[:,:,i] = np.exp(1j * (delay_plate.phi_total + displacer_plate.phi_total)) * (S1 - (S2/1j))
+            S_total = np.exp(1j * (delay_plate.phi_total + displacer_plate.phi_total)) * (S1 - (S2/1j))
+            contrast[:,:,i] = S_total
+            phase[:,:,i] = np.arctan2(S_total.imag, S_total.real)
+
+    contrast = abs(np.sum(contrast, axis=2))/np.sum(S0, axis=2)
+    phase = np.sum(phase, axis=2)
+
+    return contrast, phase
+
+def calculate_TSSH_phaseapproximations(FLC_state):
+
+    wavelength, nx, ny, pixel_size, x_small, y_small, S0_small, S1_small, S2_small, S3_small, x, y = get_msesim_output()
+
+    S_total = np.zeros((len(x), len(y), len(wavelength)))
+
+    print('Calculating TSH synthetic image...')
+
+    for i in range(len(wavelength)):
+        #Make the delay and displacer plate to find the phase shift for a given wavelength
+
+        delay_plate = Crystal(wavelength=wavelength[i], thickness=0.015, cut_angle=90., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90., two_dimensional=False)
+        displacer_plate = Crystal(wavelength=wavelength[i], thickness=0.003, cut_angle=45., name='alpha_bbo', nx=nx, ny=ny, pixel_size=pixel_size, orientation=90.,two_dimensional=False)
+
+        #Interpolate our small 200x200 msesim grid to the real image size, 1024x1024
+
+        S0_interp = interp2d(x_small, y_small, S0_small[:, :, i], kind='linear')
+        S0 = S0_interp(x,y)
+
+        S1_interp = interp2d(x_small, y_small, S1_small[:, :, i], kind='linear')
+        S1 = S1_interp(x,y)
+
+        S2_interp = interp2d(x_small, y_small, S2_small[:, :, i], kind='linear')
+        S2 = S2_interp(x,y)
+
+        #Calculate the total intensity for a given wavelength, propagating stokes components through a delay plate and a displacer plate.
+
+        displacer_plate_phase = displacer_plate.phi_0*np.ones((len(x), len(y))) + displacer_plate.phi_shear + displacer_plate.phi_hyperbolic
+        delay_plate_phase = delay_plate.phi_0*np.ones((len(x), len(y))) + delay_plate.phi_shear + delay_plate.phi_hyperbolic
+
+        if FLC_state == 1:
+            print('FLC state is 1')
+
+            S_total[:,:,i] = S0 + S1*np.sin((displacer_plate_phase + delay_plate_phase)) + S2*np.cos((delay_plate_phase + displacer_plate_phase))
+
+        else:
+            print('FLC state is 2')
+            S_total[:,:,i] = S0 + S1*np.sin((delay_plate_phase + displacer_plate_phase)) - S2*np.cos((delay_plate_phase + displacer_plate_phase))
 
     ideal_image = np.sum(S_total, axis=2)
 
-    return ideal_image
+
+    return
 
 def save_image(image, filename):
 
@@ -288,55 +334,77 @@ def save_image(image, filename):
 def make_TSH_1():
     image_1 = calculate_TSH_image(FLC_state=1)
     print('Made image 1! Saving...')
-    save_image(image_1, filename="synthetic_image1_32x32.hdf")
+    save_image(image_1, filename="TSSH_nonideal1.hdf")
 
 def make_TSH_2():
     print('Making image 2...')
     image_2 = calculate_TSH_image(FLC_state=2)
     print('Image 2 complete! Saving...')
-    save_image(image_2, filename="synthetic_image2_32x32.hdf")
+    save_image(image_2, filename="TSSH_nonideal2.hdf")
 
-def make_ASH_images():
+def make_ASH_nocircular():
 
     print('making first image')
     ash_nos3 = calculate_ASH_image(circular=False)
     print('saving image')
-    save_image(ash_nos3, filename='ash_image_noS3_savart4mm.hdf')
+    save_image(ash_nos3, filename='ASH_nocircular.hdf')
+    return
 
+def make_ASH_circular():
     #Include circular polarisation S3 term. This gives an imbalance in the amplitude of the sum and difference carriers, which carries through as an error on the phase
     print('making second image')
     ash_s3 = calculate_ASH_image(circular=True)
     print('saving image')
-    save_image(ash_s3, filename='ash_image_S34mm.hdf')
+    save_image(ash_s3, filename='ASH_circular.hdf')
     return
 
 def make_field_widened_TSH_1():
     print('Making image 1...')
     image_1 = calculate_field_widened_TSH(FLC_state=1)
     print('Made image 1! Saving...')
-    save_image(image_1, filename="image_FLC1_field_widened.hdf")
+    save_image(image_1, filename="TSSH_fw1.hdf")
 
 def make_field_widened_TSH_2():
     print('Making image 2...')
     image_2 = calculate_field_widened_TSH(FLC_state=2)
     print('Made image 1! Saving...')
-    save_image(image_2, filename="image_FLC2_field_widened.hdf")
+    save_image(image_2, filename="TSSH_fw2.hdf")
 
 def make_ideal_TSH_1():
     print('Making image 1...')
     ideal_1 = calculate_ideal_TSH(FLC_state=1)
     print('Made image 1! Saving...')
-    save_image(ideal_1, filename="image_FLC1_ideal.hdf")
+    save_image(ideal_1, filename="TSSH_ideal1.hdf")
 
 def make_ideal_TSH_2():
     print('Making image 2...')
     ideal_2 = calculate_ideal_TSH(FLC_state=2)
     print('Made image 2! Saving...')
-    save_image(ideal_2, filename="image_FLC2_ideal.hdf")
+    save_image(ideal_2, filename="TSSH_ideal2.hdf")
+
+def load_image(filename):
+    image_file = pd.HDFStore(filename)
+    image = image_file['/a']
+    return image
+
+contrast, phase = calculate_ideal_TSH(FLC_state=1)
+save_image(contrast, filename='ideal_contrast.hdf')
+save_image(phase, filename='ideal_phase.hdf')
 
 
-make_TSH_1()
-make_TSH_2()
+
+
+# image = load_image(filename='TSSH_fw1.hdf')
+
+# plt.figure()
+# plt.imshow(image)
+# plt.show()
+
+# make_ASH_images()
+# make_ideal_TSH_1()
+# make_ideal_TSH_2()
+# make_field_widened_TSH_1()
+# make_field_widened_TSH_2()
 
 
 

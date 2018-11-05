@@ -102,10 +102,10 @@ class MSESIM(object):
 
 #Example
 #Restore the .dat file
-idl.execute("restore, '/home/sgibson/PycharmProjects/msesim/runs/imse_2d_32x32_f80mm/output/data/MAST_18501_imse.dat', /VERBOSE")
+idl.execute("restore, '/home/sgibson/PycharmProjects/msesim/runs/imse_2d_32x32_f80mm_opticaxis/output/data/MAST_18501_imse.dat', /VERBOSE")
 #Give msesim run dimensions
 nx,ny = 32,32
 #Create instance of the class
 msesim = MSESIM(nx,ny)
 #Plot the spectrum and feed it the major radius you want to plot for.
-msesim.plot_spectrum(radius=2)
+msesim.plot_spectrum(radius=1.00)
