@@ -2,6 +2,7 @@ import idlbridge as idl
 import numpy as np
 from scipy.interpolate import interp2d
 import pandas as pd
+
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 
@@ -16,7 +17,7 @@ from Tools.Plotting.graph_format import plot_format
 plot_format()
 
 def get_msesim_output():
-    idl.execute("restore, '/home/sgibson/PycharmProjects/msesim/runs/imse_2d_32x32_f80mm/output/data/MAST_18501_imse.dat' , /VERBOSE")
+    idl.execute("restore, '/work/sgibson/msesim/runs/imse_2d_32x32_f80mm_superX/output/data/MAST_28977_imse.dat' , /VERBOSE")
 
     data = {}
 
@@ -61,8 +62,8 @@ def get_msesim_output():
     R = data["resolution_vector(R)"]
     R = R[:,0]
 
-    nx = 1024
-    ny= 1024
+    nx = 1025
+    ny= 1025
     npx = 32
     pixel_size = 20*10**-6
 
@@ -334,13 +335,16 @@ def save_image(image, filename):
 def make_TSH_1():
     image_1 = calculate_TSH_image(FLC_state=1)
     print('Made image 1! Saving...')
-    save_image(image_1, filename="TSSH_nonideal1.hdf")
+    save_image(image_1, filename="superx_289771.hdf")
 
 def make_TSH_2():
     print('Making image 2...')
     image_2 = calculate_TSH_image(FLC_state=2)
     print('Image 2 complete! Saving...')
-    save_image(image_2, filename="TSSH_nonideal2.hdf")
+    save_image(image_2, filename="superx_289772.hdf")
+
+make_TSH_1()
+make_TSH_2()
 
 def make_ASH_nocircular():
 
@@ -362,37 +366,34 @@ def make_field_widened_TSH_1():
     print('Making image 1...')
     image_1 = calculate_field_widened_TSH(FLC_state=1)
     print('Made image 1! Saving...')
-    save_image(image_1, filename="TSSH_fw1.hdf")
+    save_image(image_1, filename="edgecurrent_fw1.hdf")
 
 def make_field_widened_TSH_2():
     print('Making image 2...')
     image_2 = calculate_field_widened_TSH(FLC_state=2)
     print('Made image 1! Saving...')
-    save_image(image_2, filename="TSSH_fw2.hdf")
+    save_image(image_2, filename="edgecurrent_fw2.hdf")
 
 def make_ideal_TSH_1():
     print('Making image 1...')
     ideal_1 = calculate_ideal_TSH(FLC_state=1)
     print('Made image 1! Saving...')
-    save_image(ideal_1, filename="TSSH_ideal1.hdf")
+    save_image(ideal_1, filename="edgecurrent_ideal1.hdf")
 
 def make_ideal_TSH_2():
     print('Making image 2...')
     ideal_2 = calculate_ideal_TSH(FLC_state=2)
     print('Made image 2! Saving...')
-    save_image(ideal_2, filename="TSSH_ideal2.hdf")
+    save_image(ideal_2, filename="edgecurrent_ideal2.hdf")
 
 def load_image(filename):
     image_file = pd.HDFStore(filename)
     image = image_file['/a']
     return image
 
-contrast, phase = calculate_ideal_TSH(FLC_state=1)
-save_image(contrast, filename='ideal_contrast.hdf')
-save_image(phase, filename='ideal_phase.hdf')
-
-
-
+# contrast, phase = calculate_ideal_TSH(FLC_state=1)
+# save_image(contrast, filename='ideal_contrast.hdf')
+# save_image(phase, filename='ideal_phase.hdf')
 
 # image = load_image(filename='TSSH_fw1.hdf')
 
@@ -403,6 +404,7 @@ save_image(phase, filename='ideal_phase.hdf')
 # make_ASH_images()
 # make_ideal_TSH_1()
 # make_ideal_TSH_2()
+
 # make_field_widened_TSH_1()
 # make_field_widened_TSH_2()
 

@@ -4,7 +4,7 @@ from scipy.interpolate import interp2d
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from Tools.load_msesim_output import MSESIM
+from Tools.load_msesim import MSESIM
 from Model.Crystal import Crystal
 from Model.Camera import Camera
 
