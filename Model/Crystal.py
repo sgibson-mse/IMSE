@@ -11,18 +11,37 @@ class Crystal(object):
 
     def __init__(self, camera, lens, thickness, cut_angle, orientation, wavelength, name):
 
+        """
+        :param camera: Camera class with camera specifications - sensor size, pixel size etc.
+        :param lens: Lens class with lens specifications - such as focal length, aperture etc.
+        :param thickness: Thickness of the waveplate in metres.
+        :param cut_angle: Cut angle of the optical axis in degrees. Number between 0 and 90
+        :param orientation: Orientation angle of the crystal. 90 degrees is parallel to the y axis (normally the value to choose)
+        :param wavelength: Wavelength of the incident light in metres
+        :param name: Name of the crystal type - either alpha_bbo or lithium_niobate - will add more crystals as necessary
+
+        Output: A waveplate with the following derived values:
+                ne, no - extraordinary and ordinary refractive indices, calculated using sellmeier coefficients
+                birefringence - ne - no
+                phi - total phase shift due to the crystal, using the whole veiras formula
+                phi_constant - constant phase shift (zero order term)
+                phi_shear - linear phase shift (first order term)
+                phi_hyperbolic - quadratic phase shift (second order term)
+        """
+
         self.name = name
         self.thickness = thickness
         self.cut_angle = cut_angle*(np.pi/180.)
         self.orientation = orientation*(np.pi/180.)
         self.wavelength = wavelength
 
-        # if self.name == 'lithium_niobate':
-        #     self.sc_ne = [2.9804, 0.02047, 0.5981, 0.0666, 8.9543, 416.08]
-        #     self.sc_no = [2.6734, 0.01764, 1.2290, 0.05914, 12.614, 474.60]
-        #
-        #     self.ne = self.refractive_index(sellmeier_coefficients=self.sc_ne, name=self.name)
-        #     self.no = self.refractive_index(sellmeier_coefficients=self.sc_no, name=self.name)
+        if self.name == 'lithium_niobate':
+
+            self.sc_ne = [2.9804, 0.02047, 0.5981, 0.0666, 8.9543, 416.08]
+            self.sc_no = [2.6734, 0.01764, 1.2290, 0.05914, 12.614, 474.60]
+
+            self.ne = self.refractive_index(sellmeier_coefficients=self.sc_ne, name=self.name)
+            self.no = self.refractive_index(sellmeier_coefficients=self.sc_no, name=self.name)
 
         if self.name == 'alpha_bbo':
 
@@ -38,8 +57,6 @@ class Crystal(object):
 
         self.birefringence = self.ne - self.no
 
-        print(self.birefringence)
-
         x = np.linspace(-camera.sensor_size_x/2, camera.sensor_size_x/2, camera.n_pixels_x)
         y = np.linspace(-camera.sensor_size_y/2, camera.sensor_size_y/2, camera.n_pixels_y)
 
@@ -54,6 +71,15 @@ class Crystal(object):
 
     def include_non_axial_ray_angles(self, lens):
 
+        """
+        Calculate the variation in angle deviation from axial (alpha)
+        Calculate the azimuthal angles around the sensor xy plane (beta)
+
+        :param lens: Lens class as specified above.
+        :return: Alpha - Non-axial angle as a function of sensor position (Radians)
+                 Beta - Azimuthal angle around the sensor (Radians)
+        """
+
         self.alpha = np.arctan(np.sqrt((self.xx)**2 + (self.yy)**2)/(lens.focal_length))
 
         self.beta = np.arctan2(self.yy,self.xx) + np.pi
@@ -61,6 +87,13 @@ class Crystal(object):
         return self.alpha, self.beta
 
     def refractive_index(self, sellmeier_coefficients, name):
+
+        """
+
+        :param sellmeier_coefficients: Coefficients required to calculate the refractive indices of the specific crystal material. Taken from A thormans thesis.. there are many others...
+        :param name: Crystal type - either alpha_bbo or lithium_niobate
+        :return: refractive index of the material
+        """
 
         if name == 'alpha_bbo':
             return sellmeier_coefficients[0] + sellmeier_coefficients[1]/((self.wavelength*10**6)**2 - sellmeier_coefficients[2]) - (sellmeier_coefficients[3]*(self.wavelength*10**6)**2)
@@ -127,15 +160,16 @@ class Crystal(object):
 
         return self.phi_constant, self.phi_shear, self.phi_hyperbolic
 
+#Example how to use
 
-camera = Camera(photron=False)
-lens = Lens(name='collection lens', focal_length=85*10**-3, diameter=None, aperture=None, f=None)
-crystal = Crystal(camera, lens, thickness=1*10**-3, cut_angle=45, orientation=90, wavelength=660*10**-9, name='alpha_bbo')
-
-levels = np.arange(-50,60,10)
-
-plt.figure()
-cs = plt.contour(crystal.xx, crystal.yy, crystal.phi_shear, levels=levels)
-plt.clabel(cs, inline=1, fontsize=10)
-plt.colorbar()
-plt.show()
+# camera = Camera(photron=False)
+# lens = Lens(name='collection lens', focal_length=85*10**-3, diameter=None, aperture=None, f=None)
+# crystal = Crystal(camera, lens, thickness=1*10**-3, cut_angle=45, orientation=90, wavelength=660*10**-9, name='alpha_bbo')
+#
+# levels = np.arange(-50,60,10)
+#
+# plt.figure()
+# cs = plt.contour(crystal.xx, crystal.yy, crystal.phi_shear, levels=levels)
+# plt.clabel(cs, inline=1, fontsize=10)
+# plt.colorbar()
+# plt.show()
