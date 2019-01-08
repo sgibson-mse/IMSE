@@ -38,7 +38,7 @@ class Crystal(object):
 
         self.birefringence = self.ne - self.no
 
-        print(self.ne, self.no)
+        print(self.birefringence)
 
         x = np.linspace(-camera.sensor_size_x/2, camera.sensor_size_x/2, camera.n_pixels_x)
         y = np.linspace(-camera.sensor_size_y/2, camera.sensor_size_y/2, camera.n_pixels_y)
@@ -119,7 +119,7 @@ class Crystal(object):
 
         # individual terms in equation when taken to specific limits - For more info read Alex Thorman's ANU thesis (2018)
 
-        self.phi_constant = ((2 * np.pi * self.thickness * self.birefringence * np.cos(self.cut_angle) ** 2) / (self.wavelength)) * np.ones((np.shape(self.xx)))
+        self.phi_constant = (2*np.pi / self.wavelength) * self.thickness * self.birefringence * np.cos(self.cut_angle)**2 * np.ones((np.shape(self.xx)))
 
         self.phi_shear = ( (-2 * np.pi / self.wavelength) * self.thickness * self.birefringence * np.sin(2*self.cut_angle) * self.yy) / ( ((self.ne + self.no)/2) * lens.focal_length )
 
