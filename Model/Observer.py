@@ -11,50 +11,88 @@ Calculate the total signal to noise ratio including the read, dark and shot nois
 
 class Camera(object):
 
-    def __init__(self, photron):
+    def __init__(self, manufacturer):
 
-        self.n_photons = 4.34*10**7
+        self.name = manufacturer
 
-        if photron:
-            self.photron_specs()
+        self.px = None
+        self.py = None
+        self.pixel_size = None
+
+        self.sensor_size_x = None
+        self.sensor_size_y = None
+
+        self.dark_noise = None
+        self.dark_noise_error = None
+
+        self.read_noise = None
+        self.fill_factor = None
+
+        self.quantum_efficiency = None
+        self.fullwell_capacity = None
+        self.gain = None
+        self.integration_time = None
+
+        self.n_photons = None
+
+        if self.name == 'photron-sa4':
+            self.photron_specs(self.name)
+        if self.name == 'pco-edge':
+            self.pco_specs(self.name)
         else:
-            self.pco_specs()
+            print('Properties for the camera you specified are not available! Please choose either photron-sa4 or pco-edge.')
 
-        self.intensity = self.calculate_intensity()
-        self.shot_noise = self.calculate_shotnoise()
-        self.dark = self.calculate_darknoise()
-        self.SN = self.calculate_SN()
 
-    def photron_specs(self):
-        self.name = 'Photron SA4'
-        self.n_pixels_x = 1024
-        self.n_pixels_y = 1024
+    def photron_specs(self, name):
+
+        self.name = name
+        self.px = 1024
+        self.py = 1024
         self.pixel_size = 20*10**-6 #m
+
         self.sensor_size_x = 20.48*10**-3 #m
         self.sensor_size_y = 20.48*10**-3 #m
+
         self.dark_noise = 3.55 #electrons
         self.dark_noise_error = 0.02
-        self.read_out = 41.2
+
+        self.read_noise = 41.2
         self.fill_factor = 0.52
+
         self.fullwell_capacity = 45000
         self.quantum_efficiency = 0.4
         self.gain = 0.0862
         self.integration_time = np.arange(1*10**-3, 20.5*10**-3, 0.5*10**-3)
 
-    def pco_specs(self):
-        self.name = 'PCO Edge'
-        self.n_pixels_x = 2560
-        self.n_pixels_y = 2160
+        self.n_photons = 4*10**7
+
+        self.x = np.linspace(-1 * self.sensor_size_x / 2, -1 * self.sensor_size_x / 2, self.px)
+        self.y = np.linspace(-1 * self.sensor_size_y / 2, -1 * self.sensor_size_y / 2, self.py)
+
+    def pco_specs(self, name):
+
+        self.name = name
+        self.px = 2560
+        self.py = 2160
+
         self.sensor_size_x = 16.64*10**-3
         self.sensor_size_y = 14.04*10**-3
+
         self.dark_noise = 2 #electrons
-        self.read_out = 2.2 #electrons
+        self.read_noise = 2.2 #electrons
+
         self.fill_factor = 1 # how much of the pixel is actually available for light collection
         self.fullwell_capacity = 30000 #electrons
         self.pixel_size = 6.5*10**-6
+
         self.gain = 0.46 #electrons/count
         self.quantum_efficiency = 0.54
         self.integration_time = np.arange(5*10**-3, 20.5*10**-3, 0.5*10**-3)
+
+        self.n_photons = 4*10**7
+
+        self.x = np.linspace(-1 * self.sensor_size_x / 2, -1 * self.sensor_size_x / 2, self.px)
+        self.y = np.linspace(-1 * self.sensor_size_y / 2, -1 * self.sensor_size_y / 2, self.py)
 
     def calculate_intensity(self):
         self.intensity = self.n_photons * self.fill_factor * self.quantum_efficiency * self.integration_time * self.gain
@@ -69,7 +107,7 @@ class Camera(object):
         return self.dark
 
     def calculate_SN(self):
-        self.SN = self.intensity / np.sqrt(self.read_out ** 2 + self.dark + self.shot_noise)
+        self.SN = self.intensity / np.sqrt(self.read_noise ** 2 + self.dark + self.shot_noise)
         return self.SN
 
     def plot_SN(self):
@@ -81,8 +119,4 @@ class Camera(object):
         plt.ylabel('Signal to Noise')
         plt.legend()
         plt.show()
-
-# Example
-# camera = Camera(photron=False)
-# camera.plot_SN()
 
