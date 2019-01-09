@@ -11,9 +11,9 @@ Calculate the total signal to noise ratio including the read, dark and shot nois
 
 class Camera(object):
 
-    def __init__(self, manufacturer):
+    def __init__(self, name):
 
-        self.name = manufacturer
+        self.name = name
 
         self.px = None
         self.py = None
@@ -39,9 +39,11 @@ class Camera(object):
             self.photron_specs(self.name)
         if self.name == 'pco-edge':
             self.pco_specs(self.name)
-        else:
-            print('Properties for the camera you specified are not available! Please choose either photron-sa4 or pco-edge.')
+        # else:
+        #     print('Properties for the camera you specified are not available! Please choose either photron-sa4 or pco-edge.')
 
+    def observe(self, light):
+        return np.sum(light, axis=2)
 
     def photron_specs(self, name):
 
@@ -66,8 +68,8 @@ class Camera(object):
 
         self.n_photons = 4*10**7
 
-        self.x = np.linspace(-1 * self.sensor_size_x / 2, -1 * self.sensor_size_x / 2, self.px)
-        self.y = np.linspace(-1 * self.sensor_size_y / 2, -1 * self.sensor_size_y / 2, self.py)
+        self.x = np.linspace(-1 * self.sensor_size_x / 2, 1 * self.sensor_size_x / 2, self.px)
+        self.y = np.linspace(-1 * self.sensor_size_y / 2, 1 * self.sensor_size_y / 2, self.py)
 
     def pco_specs(self, name):
 
@@ -91,8 +93,8 @@ class Camera(object):
 
         self.n_photons = 4*10**7
 
-        self.x = np.linspace(-1 * self.sensor_size_x / 2, -1 * self.sensor_size_x / 2, self.px)
-        self.y = np.linspace(-1 * self.sensor_size_y / 2, -1 * self.sensor_size_y / 2, self.py)
+        self.x = np.linspace(-1 * self.sensor_size_x / 2, 1 * self.sensor_size_x / 2, self.px)
+        self.y = np.linspace(-1 * self.sensor_size_y / 2, 1 * self.sensor_size_y / 2, self.py)
 
     def calculate_intensity(self):
         self.intensity = self.n_photons * self.fill_factor * self.quantum_efficiency * self.integration_time * self.gain
