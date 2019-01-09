@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from Model.Constants import Constants
-from Model.Camera import Camera
-from Model.Lens import Lens
+from Model.Observer import Camera
+from Model.Optic import Lens
 
 constants = Constants()
 
@@ -89,7 +89,6 @@ class Crystal(object):
     def refractive_index(self, sellmeier_coefficients, name):
 
         """
-
         :param sellmeier_coefficients: Coefficients required to calculate the refractive indices of the specific crystal material. Taken from A thormans thesis.. there are many others...
         :param name: Crystal type - either alpha_bbo or lithium_niobate
         :return: refractive index of the material
@@ -160,16 +159,24 @@ class Crystal(object):
 
         return self.phi_constant, self.phi_shear, self.phi_hyperbolic
 
+class ColouredCrystal:
+
+    def __init__(self, color):
+
+        super().__init__()
+
+        self.color= color
+
 #Example how to use
 
-# camera = Camera(photron=False)
-# lens = Lens(name='collection lens', focal_length=85*10**-3, diameter=None, aperture=None, f=None)
-# crystal = Crystal(camera, lens, thickness=1*10**-3, cut_angle=45, orientation=90, wavelength=660*10**-9, name='alpha_bbo')
-#
-# levels = np.arange(-50,60,10)
-#
-# plt.figure()
-# cs = plt.contour(crystal.xx, crystal.yy, crystal.phi_shear, levels=levels)
-# plt.clabel(cs, inline=1, fontsize=10)
-# plt.colorbar()
-# plt.show()
+camera = Camera(photron=False)
+lens = Lens(name='collection lens', focal_length=85*10**-3, diameter=None, aperture=None, f=None)
+crystal = Crystal(camera, lens, thickness=1*10**-3, cut_angle=45, orientation=90, wavelength=660*10**-9, name='alpha_bbo')
+
+levels = np.arange(-4, -0.5, 0.5)
+
+plt.figure()
+cs = plt.contour(crystal.xx, crystal.yy, crystal.phi_hyperbolic, levels=levels)
+plt.clabel(cs, inline=1, fontsize=10)
+plt.colorbar()
+plt.show()
