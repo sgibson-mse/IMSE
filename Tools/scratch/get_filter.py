@@ -1,6 +1,6 @@
 from Model.Constants import Constants
-from Model.Camera import Camera
-from Model.semicustomfilter import SemiCustomFilter
+from Model.Observer import Camera
+from Model.scratch.semicustomfilter import SemiCustomFilter
 
 import matplotlib.pyplot as plt
 import idlbridge as idl

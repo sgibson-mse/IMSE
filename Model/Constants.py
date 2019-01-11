@@ -1,4 +1,4 @@
-from numpy import pi, array, sin, cos
+from numpy import pi
 
 class Constants(object):
 

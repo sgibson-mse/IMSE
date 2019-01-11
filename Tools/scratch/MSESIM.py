@@ -5,7 +5,7 @@ from matplotlib import gridspec
 from scipy.io import readsav
 import pyuda
 
-from Model.Camera import Camera
+from Model.Observer import Camera
 from Tools.Plotting.graph_format import plot_format
 
 cb = plot_format()

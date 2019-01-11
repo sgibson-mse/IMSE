@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # print("Switched to:",matplotlib.get_backend())
 
 from Tools.MSESIM import MSESIM
-from Model.Camera import Camera
+from Model.Observer import Camera
 # from Model.SyntheticImage import simulate_TSH, simulate_field_widened, simulate_ASH, load_image, save_image
 from Tools.demodulate_TSH_synthetic_image import demodulate_nfw_images, load_image
 

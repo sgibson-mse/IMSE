@@ -2,10 +2,9 @@
 import numpy as np
 from scipy.interpolate import interp1d
 import idlbridge as idl
-import matplotlib.pyplot as plt
 
 #Internal imports
-from Model.Crystal import Crystal
+from Model.scratch.Crystal import Crystal
 from Model.Constants import Constants
 from Tools.load_msesim import MSESIM
 from Tools.Plotting.graph_format import plot_format

@@ -1,12 +1,10 @@
 import idlbridge as idl
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage.util import random_noise as rn
 
-from Model.Camera import Camera
+from Model.Observer import Camera
 from Model.Constants import Constants
-from Model.Noise import digitize_image, demodulate_images, load_image, image_shot_noise
-from Tools.demodulate_TSH_synthetic_image import demodulate_nfw_images
+from Model.scratch.Noise import digitize_image, demodulate_images, load_image, image_shot_noise
 
 from Tools.Plotting.graph_format import plot_format
 from Tools.MSESIM import MSESIM

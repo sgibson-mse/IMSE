@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from Tools.Plotting.graph_format import plot_format
-from Model.Camera import Camera
+from Model.Observer import Camera
 from Model.Constants import Constants
 from Tools.demodulate_TSH_synthetic_image import demodulate_image, phase_mod, msesim_profiles
 

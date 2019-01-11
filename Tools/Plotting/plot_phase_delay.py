@@ -1,5 +1,5 @@
-from Tools.Plotting.graph_format import plot_format, plot_save
-from Model.Crystal import Crystal
+from Tools.Plotting.graph_format import plot_format
+from Model.scratch.Crystal import Crystal
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
