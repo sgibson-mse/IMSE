@@ -33,6 +33,7 @@ def retard(delay, displacer, light, FLC):
 
         phase = phase_delay + phase_displacer
 
+
         #delay_phi_c, delay_phi_s, delay_phi_h = delay.approximate_phase_delay(light.wavelength[i], light.x, light.y, lens)
 
         #displacer_phi_c, displacer_phi_s, displacer_phi_h = displacer.approximate_phase_delay(light.wavelength[i], light.x, light.y, lens)
