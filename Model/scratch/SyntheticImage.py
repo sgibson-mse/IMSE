@@ -1,10 +1,9 @@
 
-from Model.Crystal import Crystal
-from Model.Camera import Camera
+from Model.scratch.Crystal import Crystal
+from Model.Observer import Camera
 from Tools.MSESIM import MSESIM
 
 import idlbridge as idl
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp2d
 import pandas as pd

@@ -4,22 +4,6 @@ from Model.Material import Material
 from Model.Constants import Constants
 constants = Constants()
 
-class Polarizer():
-
-    def __init__(self, theta):
-
-        self.theta = theta*(np.pi/180.)
-
-    def get_phase(self, *args):
-        return self.theta
-
-    def matrix(self, theta):
-
-        return np.array([[1, 0, 0, 0],
-                        [0, np.cos(2*theta), np.sin(2*theta), 0],
-                        [0, -1*np.sin(2*theta), np.cos(2*theta), 0],
-                        [0, 0, 0, 1]])
-
 class Crystal(Material):
 
     def __init__(self, thickness, cut_angle, orientation, material_name):
@@ -72,7 +56,7 @@ class Crystal(Material):
 
         t2 = np.sqrt(self.no**2 - constants.n_air**2*np.sin(alpha)**2)
 
-        t3 = (constants.n_air * (self.no**2 - self.ne**2) * np.sin(self.cut_angle) * np.cos(self.cut_angle) * np.cos(beta + self.orientation) * np.sin(alpha))/(self.ne**2 * np.sin(self.cut_angle)**2 + self.no**2 * np.cos(self.cut_angle)**2)
+        t3 = (constants.n_air * (self.no**2 - self.ne**2) * np.sin(self.cut_angle) * np.cos(self.cut_angle) * np.cos(beta - self.orientation) * np.sin(alpha))/(self.ne**2 * np.sin(self.cut_angle)**2 + self.no**2 * np.cos(self.cut_angle)**2)
 
         self.phi = 2 * np.pi * (self.thickness/wavelength) * (t1 - t2 - t3)
 
@@ -92,7 +76,7 @@ class Crystal(Material):
 
         self.phi_constant = (2*np.pi / wavelength) * self.thickness * self.birefringence * np.cos(self.cut_angle)**2 * np.ones((np.shape(x)))
 
-        self.phi_shear = ( (-2 * np.pi / wavelength) * self.thickness * self.birefringence * np.sin(2*self.cut_angle) * y) / ( ((self.ne + self.no)/2) * lens.focal_length )
+        self.phi_shear = ( (-2 * np.pi / wavelength) * self.thickness * self.birefringence * np.sin(2*self.cut_angle) * y) / ( ((self.ne + self.no)/2) * lens.focal_length)
 
         self.phi_hyperbolic = ((2 * np.pi / wavelength) * self.thickness * self.birefringence) / (4 * ((self.ne + self.no)/2)**2 * (lens.focal_length)**2) * ((3-np.cos(2*self.cut_angle))*(x**2) - (3*np.cos(2*self.cut_angle)-1)*(y**2))
 
@@ -112,10 +96,38 @@ class Lens():
 
     def __init__(self, focal_length, diameter, aperture, f):
 
+        self.transmission = 0.9
         self.focal_length = focal_length
         self.diameter = diameter
         self.aperture = aperture
         self.f_number = f
 
+class Polarizer():
+
+    def __init__(self, theta):
+
+        self.theta = theta*(np.pi/180.)
+        self.transmission = 0.6
+
+    def get_phase(self, *args):
+        return self.theta
+
+    def matrix(self, theta):
+
+        return np.array([[1, 0, 0, 0],
+                        [0, np.cos(2*theta), np.sin(2*theta), 0],
+                        [0, -1*np.sin(2*theta), np.cos(2*theta), 0],
+                        [0, 0, 0, 1]])
+
+class Filter():
+
+    def __init__(self, fwhm, cwl):
+
+        self.fwhm = fwhm
+        self.cwl = cwl
+        self.transmission = 0.6
+        #transmission function should be calculated here
+
+#Probs add some more optics in here
 
 

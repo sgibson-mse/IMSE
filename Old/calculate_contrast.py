@@ -3,10 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import idlbridge as idl
 from scipy.interpolate import interp1d
-from scipy import interp
 
 #Internal imports
-from Model.Crystal import Crystal
+from Model.scratch.Crystal import Crystal
 from Model.Constants import Constants
 from Tools.Plotting.graph_format import plot_format
 

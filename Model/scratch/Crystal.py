@@ -135,7 +135,7 @@ class Crystal(object):
 
         t3 = (constants.n_air * (self.no**2 - self.ne**2) * np.sin(self.cut_angle) * np.cos(self.cut_angle) * np.cos(self.beta + self.orientation) * np.sin(self.alpha))/(self.ne**2 * np.sin(self.cut_angle)**2 + self.no**2 * np.cos(self.cut_angle)**2)
 
-        self.phi = 2 * np.pi * (self.thickness/self.wavelength) * (t1 - t2 - t3)
+        self.phi = 2 * np.pi * (self.thickness/self.wavelength) * (t1 + t2 + t3)
 
         return self.phi
 

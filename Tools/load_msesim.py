@@ -9,11 +9,12 @@ beam emission intensity as a function of R,Z. Can make multiple instances of thi
 
 """
 
-class MSESIM(object):
+class MSESIM():
 
     def __init__(self, filepath):
 
         idl.execute("restore, '{0}' , /VERBOSE".format(filepath))
+
         self.data = self.create_data_dictionary()
         self.get_values()
 
@@ -154,7 +155,6 @@ class MSESIM(object):
             self.emission_intensity_R = self.data['emission_intensity(R)'].reshape(int(np.sqrt(len(self.channels))),
                                                        int(np.sqrt(len(self.channels))), 400)
 
-
         else:
             pass
 
@@ -235,8 +235,9 @@ class MSESIM(object):
 
         return
 
-filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_magneticsequi_edgecurrent/output/data/MAST_24763_imse.dat'
-msesim = MSESIM(filepath=filepath)
-
-msesim.plot_spectrum(radius=1.4)
-msesim.plot_emission()
+# Example on how it works
+# filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_magneticsequi_edgecurrent/output/data/MAST_24763_imse.dat'
+# msesim = MSESIM(filepath=filepath)
+#
+# msesim.plot_spectrum(radius=1.4)
+# msesim.plot_emission()

@@ -1,11 +1,8 @@
-import idlbridge as idl
 import numpy as np
-import matplotlib.pyplot as plt
 
-from Tools.MSESIM import MSESIM
 from Tools.demodulate_TSH_synthetic_image import load_image, demodulate_nfw_images
-from Tools.calculate_bz_profile import interp_msesim_gamma, get_a_coefficients, efit_polarisation_angle,calculate_bz_mse, plot_polarisation_angles
-from Model.Noise import digitize_image, demodulate_images
+from Tools.calculate_bz_profile import interp_msesim_gamma, get_a_coefficients, efit_polarisation_angle
+from Model.scratch.Noise import digitize_image, demodulate_images
 from Tools.Plotting.graph_format import plot_format
 
 cb = plot_format()

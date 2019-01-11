@@ -1,9 +1,12 @@
+import numpy as np
+
 class Material():
 
     def __init__(self, name):
 
         self.name = name
         self.sc_ne, self.sc_no = self._sellmeier_coefficients(name)
+        self.transmission = 0.9
 
     def _sellmeier_coefficients(self, name):
 
@@ -27,9 +30,9 @@ class Material():
         """
 
         if material_name == 'alpha_bbo':
-            return sellmeier_coefficients[0] + sellmeier_coefficients[1]/((wavelength*10**6)**2 - sellmeier_coefficients[2]) - (sellmeier_coefficients[3]*(wavelength*10**6)**2)
+            return np.sqrt(sellmeier_coefficients[0] + sellmeier_coefficients[1]/((wavelength*10**6)**2 - sellmeier_coefficients[2]) - (sellmeier_coefficients[3]*(wavelength*10**6)**2))
 
         if material_name == 'lithium_niobate':
-            return 1 + (sellmeier_coefficients[0]*(wavelength*10**6)**2)/((wavelength*10**6)**2 - sellmeier_coefficients[1]) + (sellmeier_coefficients[2]*(wavelength*10**6)**2)/((wavelength*10**6)**2 - sellmeier_coefficients[3]) + (sellmeier_coefficients[4]*(wavelength*10**6)**2) / ((wavelength*10**6)**2 - sellmeier_coefficients[5])
+            return np.sqrt(1 + (sellmeier_coefficients[0]*(wavelength*10**6)**2)/((wavelength*10**6)**2 - sellmeier_coefficients[1]) + (sellmeier_coefficients[2]*(wavelength*10**6)**2)/((wavelength*10**6)**2 - sellmeier_coefficients[3]) + (sellmeier_coefficients[4]*(wavelength*10**6)**2) / ((wavelength*10**6)**2 - sellmeier_coefficients[5]))
         else:
             print('Crystal not yet implemented!')

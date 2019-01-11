@@ -7,8 +7,8 @@ from Tools.MSESIM import MSESIM
 from Tools.demodulate_TSH_synthetic_image import demodulate_image
 
 from Model.Constants import Constants
-from Model.Crystal import Crystal
-from Model.Camera import Camera
+from Model.scratch.Crystal import Crystal
+from Model.Observer import Camera
 
 
 import numpy as np

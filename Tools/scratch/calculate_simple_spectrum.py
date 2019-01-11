@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from Model.Constants import Constants, Conversions
 from Model.Beam import Beam
-from Model.Crystal import Crystal
+from Model.scratch.Crystal import Crystal
 
 from Tools.Plotting.graph_format import plot_format
 

@@ -3,15 +3,12 @@ import numpy as np
 from scipy.interpolate import interp2d
 import pandas as pd
 
-import matplotlib.pyplot as plt
-from matplotlib import ticker
-
 # import matplotlib as matplotlib
 # matplotlib.use('Qt4Agg',warn=False, force=True)
 # import matplotlib.pyplot as plt
 # print("Switched to:",matplotlib.get_backend())
 
-from Model.Crystal import Crystal
+from Model.scratch.Crystal import Crystal
 from Tools.Plotting.graph_format import plot_format
 
 plot_format()
