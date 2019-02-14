@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import rc
 
 def plot_format():
@@ -13,7 +12,7 @@ def plot_format():
     cb = ["#0173B2", "#DE8F05", "#029E73", "#D55E00", "#CC78BC", "#CA9161", "#FBAFE4", "#949494", "#ECE133", "#56B4E9"] #-colorblind plotting
 
     SMALL_SIZE = 26
-    MEDIUM_SIZE = 34
+    MEDIUM_SIZE = 24
     BIGGER_SIZE = 36
 
     rc('font', size=SMALL_SIZE, **{'family': 'sans-serif', 'sans-serif': ['sans-serif']})

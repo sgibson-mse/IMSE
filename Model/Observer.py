@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Tools.Plotting.graph_format import plot_format
+from IMSE.Tools.Plotting.graph_format import plot_format
+
+from IMSE.Tools.load_msesim import MSESIM
 
 plot_format()
 
@@ -41,6 +43,7 @@ class Camera(object):
             self.pco_specs(self.name)
         else:
             print('Camera properties are not currently implemented, choose photron-sa4 or pco-edge!')
+
 
     def observe(self, emission, exposure, ideal):
 
@@ -143,10 +146,13 @@ class Camera(object):
         self.fullwell_capacity = 45000
         self.quantum_efficiency = 0.4
         self.gain = 0.0862
-        self.integration_time = np.arange(1*10**-3, 20.5*10**-3, 0.5*10**-3)
+        self.integration_time = 1*10**-3#np.arange(1*10**-3, 20.5*10**-3, 0.5*10**-3)
 
         self.x = np.linspace(-1 * self.sensor_size_x / 2, 1 * self.sensor_size_x / 2, self.px)
         self.y = np.linspace(-1 * self.sensor_size_y / 2, 1 * self.sensor_size_y / 2, self.py)
+
+        self.xx, self.yy = np.meshgrid(self.x, self.y)
+	
 
     def pco_specs(self, name):
 
@@ -173,6 +179,11 @@ class Camera(object):
         self.x = np.linspace(-1 * self.sensor_size_x / 2, 1 * self.sensor_size_x / 2, self.px)
         self.y = np.linspace(-1 * self.sensor_size_y / 2, 1 * self.sensor_size_y / 2, self.py)
 
+        self.xx, self.yy = np.meshgrid(x, y)
+
+        self.alpha = np.arctan(np.sqrt((self.xx)**2 + (self.yy)**2)/(lens.focal_length*10**-6))
+        self.beta = np.arctan2(self.yy,self.xx)
+
     def plot(self, image):
         xx, yy = np.meshgrid(self.x, self.y)
         plt.figure()
@@ -180,19 +191,19 @@ class Camera(object):
         plt.colorbar()
         plt.show()
 
-    # def calculate_intensity(self):
+    # def calculate_avintensity(self):
     #     self.intensity = self.n_photons * self.fill_factor * self.quantum_efficiency * self.integration_time * self.gain
     #     return self.intensity
     #
-    # def calculate_shotnoise(self):
+    # def calculate_avshotnoise(self):
     #     self.shot_noise = self.n_photons * self.integration_time * self.quantum_efficiency * self.gain**2
     #     return self.shot_noise
     #
-    # def calculate_darknoise(self):
+    # def calculate_avdarknoise(self):
     #     self.dark = self.dark_noise * self.integration_time
     #     return self.dark
     #
-    # def calculate_SN(self):
+    # def calculate_avSN(self):
     #     self.SN = self.intensity / np.sqrt(self.read_noise ** 2 + self.dark + self.shot_noise)
     #     return self.SN
     #
@@ -213,3 +224,17 @@ class AvalanchePhotoDiode:
         self.sensor_size = None
         self.quantum_efficiency = None
         #etc.
+# 
+# filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_f85mm/output/data/MAST_18501_imse.dat'
+# name = 'photron-sa4'
+# msesim = MSESIM(filepath, dimension=2)
+# n_photons = np.sum(msesim.S0, axis=2)
+# camera = Camera(name, n_photons)
+# 
+# plt.figure()
+# plt.pcolormesh(msesim.x[::-1]*1000, msesim.y*1000, camera.SN, shading='gourand')
+# cs = plt.colorbar()
+# plt.xlabel('X position on sensor (mm)')
+# plt.ylabel('Y position on sensor (mm)')
+# cs.ax.set_ylabel('Signal to Noise, t=1ms')
+# plt.show()

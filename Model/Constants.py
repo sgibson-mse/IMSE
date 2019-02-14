@@ -18,7 +18,6 @@ class Constants(object):
         self.mu_0 = 1.2566370614*10**-6 # Magnetic vacuum permeability
         self.epsilon_0 = 8.85*10**-12 # Electric vacuum permeability
 
-
 class Conversions(object):
 
     def __init__(self):

@@ -11,10 +11,11 @@ beam emission intensity as a function of R,Z. Can make multiple instances of thi
 
 class MSESIM():
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, dimension):
 
         idl.execute("restore, '{0}' , /VERBOSE".format(filepath))
 
+        self.dimension = dimension
         self.data = self.create_data_dictionary()
         self.get_values()
 
@@ -97,17 +98,15 @@ class MSESIM():
 
         """
 
-        self.channels = self.data['channels']
+
 
         #Stokes components
 
         self.wavelength = self.data['wavelength']/10
         self.stokes_vector = self.data['total_stokes'] # channels, stokes component, wavelength
         self.major_radius = self.data["resolution_vector(R)"][:,0]
-        self.S0 = self.stokes_vector[:, 0, :]
-        self.S1 = self.stokes_vector[:, 1, :]
-        self.S2 = self.stokes_vector[:, 2, :]
-        self.S3 = self.stokes_vector[:, 3, :]
+
+        self.radial_res = self.data["resolution_vector(R)"]
 
         #Flux function
 
@@ -129,16 +128,35 @@ class MSESIM():
 
         self.central_coordinates = self.data['central_coordinates']
 
+        self.grid_coordinates = self.data['grid_coordinates']
+
         #Field Vectors
 
         self.Bfld_vector = self.data["bfield_vector"]
         self.Efld_vector = self.data["efield_vector"]
 
         self.emission_intensity_R = self.data['emission_intensity(R)']
+        self.emission_intensity_psi = self.data['emission_intensity(psi)']
+
+        self.cwl_stokes = self.data['cwl_stokes']
 
         #Check if the stokes array is square - if so, then it's probably an image so make the array 2D
 
-        if int(np.sqrt(len(self.channels)) + 0.5) ** 2 == int(len(self.channels)):
+        if self.dimension == 1:
+            self.S0 = self.stokes_vector[:, 0, :]
+            self.S1 = self.stokes_vector[:, 1, :]
+            self.S2 = self.stokes_vector[:, 2, :]
+            self.S3 = self.stokes_vector[:, 3, :]
+            self.channels = self.data['channels']
+
+
+        if self.dimension == 2:
+
+            self.channels = self.data['channels']
+
+            self.x = np.linspace(-10.24*10**-3,10.24*10**-3, np.sqrt(len(self.channels)))
+            self.y = np.linspace(-10.24*10**-3,10.24*10**-3, np.sqrt(len(self.channels)))
+
             self.stokes_vector = self.stokes_vector.reshape(int(np.sqrt(len(self.channels))),int(np.sqrt(len(self.channels))),len(self.stokes_vector[0,:,0]), len(self.wavelength)) # x, y, stokes, wavelength
 
             self.major_radius = self.major_radius.reshape(int(np.sqrt(len(self.channels))),int(np.sqrt(len(self.channels))))[0,:]
@@ -170,7 +188,7 @@ class MSESIM():
 
         self.total_circular_fraction = np.sqrt(self.S3**2)/self.S0
 
-        self.polarisation_angle = 0.5*np.arctan2(self.S2, self.S1)*(180./np.pi)
+        self.polarisation_angle = 0.5*np.arctan2(self.S2,self.S1)
 
         return
 
@@ -182,24 +200,25 @@ class MSESIM():
         fig= plt.figure(1)
         gs1 = gridspec.GridSpec(nrows=3, ncols=3)
         ax1 = fig.add_subplot(gs1[:-1, :])
-        plt.plot(self.wavelength, self.S0[idx,idx,:].T, color='black', label='$I_{\mathrm{total}}$')
-        plt.plot(self.wavelength, np.sqrt(self.S2[idx,idx,:].T**2 + self.S1[idx,idx,:].T**2), label='$I_{\mathrm{linear}}$')
-        plt.plot(self.wavelength, self.S3[idx,idx,:].T, label='$I_{\mathrm{circular}}$')
+        plt.plot(self.wavelength, self.S0[idx,:].T, color='black', label='$I_{\mathrm{total}}$')
+        plt.plot(self.wavelength, np.sqrt(self.S2[idx,:].T**2 + self.S1[idx,:].T**2), label='$I_{\mathrm{linear}}$')
+        plt.plot(self.wavelength, self.S3[idx,:].T, label='$I_{\mathrm{circular}}$')
         plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False, useMathText=True)
         plt.legend(prop={'size': 40})
         plt.xlabel('Wavelength (nm)')
         plt.ylabel('Intensity $I$ (photons/s)', labelpad=5)
 
         ax2 = fig.add_subplot(gs1[-1, :-1])
-        plt.plot(self.wavelength, self.polarisation_angle[int(len(self.major_radius)/2),idx,:].T, label='$\gamma$')
+        plt.plot(self.wavelength, self.polarisation_angle[idx,:].T, label='$\gamma$')
         plt.yticks(np.arange(-45., 46, 45))
         plt.xlim(659.4, 660.4)
         plt.xlabel('Wavelength (nm)')
         plt.ylabel('Polarisation angle $\gamma$ (deg.)')
 
         ax3 = fig.add_subplot(gs1[-1, -1])
-        ax3.plot(self.wavelength, self.total_circular_fraction[idx, idx, :].T, label='$CPF$')
-        ax3.plot(self.wavelength, self.unpolarised_fraction[idx, idx, :].T, color='black', label='$UF$')
+        ax3.plot(self.wavelength, self.total_circular_fraction[idx, :].T, label='$CPF$')
+        ax3.plot(self.wavelength, self.LPF[idx, :].T, label='$LPF$')
+        ax3.plot(self.wavelength, self.unpolarised_fraction[idx, :].T, color='black', label='$UF$')
         plt.yticks(np.arange(0, 1, 0.2))
         ax3.yaxis.tick_right()
         ax3.yaxis.set_label_position("right")
@@ -235,9 +254,9 @@ class MSESIM():
 
         return
 
-# Example on how it works
-# filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_magneticsequi_edgecurrent/output/data/MAST_24763_imse.dat'
-# msesim = MSESIM(filepath=filepath)
+# # # #Example on how it works
+# filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_MASTU_edgecurrent/output/data/MASTU_edgecurrent.dat'
+# msesim = MSESIM(filepath=filepath, dimension=2)
 #
-# msesim.plot_spectrum(radius=1.4)
-# msesim.plot_emission()
+# msesim.plot_spectrum(radius=1.35)
+# # # # msesim.plot_emission()
