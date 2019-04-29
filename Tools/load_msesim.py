@@ -2,6 +2,10 @@ import idlbridge as idl
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from scipy.interpolate import interp2d
+from IMSE.Tools.Plotting.graph_format import plot_format
+
+cb = plot_format()
 
 """
 This code takes the output .dat file from MSESIM and reads in the commonly used parameters from the file. Can easily plot the spectrum for a specific major radius, and the 
@@ -97,8 +101,6 @@ class MSESIM():
              - Linearly polarised fraction, circularly polarised fraction, unpolarised fraction, and polarisation angle.
 
         """
-
-
 
         #Stokes components
 
@@ -204,16 +206,16 @@ class MSESIM():
         plt.plot(self.wavelength, np.sqrt(self.S2[idx,:].T**2 + self.S1[idx,:].T**2), label='$I_{\mathrm{linear}}$')
         plt.plot(self.wavelength, self.S3[idx,:].T, label='$I_{\mathrm{circular}}$')
         plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False, useMathText=True)
-        plt.legend(prop={'size': 40})
-        plt.xlabel('Wavelength (nm)')
-        plt.ylabel('Intensity $I$ (photons/s)', labelpad=5)
+        plt.legend(prop={'size': 30})
+        plt.xlabel('Wavelength (nm)', fontsize=18)
+        plt.ylabel('Intensity $I$ (photons/s)', labelpad=5, fontsize=18)
 
         ax2 = fig.add_subplot(gs1[-1, :-1])
         plt.plot(self.wavelength, self.polarisation_angle[idx,:].T, label='$\gamma$')
         plt.yticks(np.arange(-45., 46, 45))
         plt.xlim(659.4, 660.4)
-        plt.xlabel('Wavelength (nm)')
-        plt.ylabel('Polarisation angle $\gamma$ (deg.)')
+        plt.xlabel('Wavelength (nm)', fontsize=18)
+        plt.ylabel('Polarisation angle $\gamma$ (deg.)', fontsize=18)
 
         ax3 = fig.add_subplot(gs1[-1, -1])
         ax3.plot(self.wavelength, self.total_circular_fraction[idx, :].T, label='$CPF$')
@@ -223,8 +225,8 @@ class MSESIM():
         ax3.yaxis.tick_right()
         ax3.yaxis.set_label_position("right")
         ax3.legend(prop={'size': 18})
-        plt.ylabel('Polarised Fraction', labelpad=10)
-        plt.xlabel('Wavelength (nm)')
+        plt.ylabel('Polarised Fraction', labelpad=10, fontsize=18 )
+        plt.xlabel('Wavelength (nm)', fontsize=18)
         plt.show()
 
     def plot_emission(self):
@@ -254,9 +256,40 @@ class MSESIM():
 
         return
 
-# # # #Example on how it works
+# # #Example on how it works
+# # #filepath = '/work/sgibson/msesim/runs/jet_mse_beamchange/output/data/JET_87123_linesplitting.dat'
 # filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_MASTU_edgecurrent/output/data/MASTU_edgecurrent.dat'
 # msesim = MSESIM(filepath=filepath, dimension=2)
 #
-# msesim.plot_spectrum(radius=1.35)
-# # # # msesim.plot_emission()
+#
+# r_msesim = msesim.radial_res[:,0].reshape(32,32)
+#
+# r = r_msesim[16,:]
+# radial_res_small = msesim.radial_res[:,5].reshape(32,32)
+# radial_res = radial_res_small[16,:]
+#
+# plt.figure()
+# plt.plot(r, radial_res, label=)
+
+# z = np.linspace(np.min(msesim.Z), np.max(msesim.Z), 32)
+#
+#
+# resolution_interp = interp2d(r,z,radial_res_small)
+#
+# r_big = np.linspace(np.min(r), np.max(r), 1024)
+# z_big = np.linspace(np.min(z), np.max(z), 1024)
+#
+# radial_resolution = resolution_interp(r_big, z_big)
+#
+# rr, zz = np.meshgrid(r_big, z_big)
+#
+# f = plt.figure()
+# plt.pcolormesh(rr, zz, radial_resolution*100, shading='gourand', cmap='viridis')
+# plt.xlabel('R (m)')
+# plt.ylabel('Z (m)')
+# plt.colorbar(label='Spatial Resolution (cm)')
+# plt.show()
+#f.savefig("spatial_resolution.pdf", bbox_inches='tight')
+
+#msesim.plot_spectrum(radius=1.0)
+

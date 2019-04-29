@@ -48,9 +48,9 @@ def filter_image(mask, shift_image):
 
     filtered_image = shift_image*mask
 
-    # plt.figure()
-    # plt.imshow(np.log10(abs(filtered_image)))
-    # plt.show()
+    plt.figure()
+    plt.imshow(np.log10(abs(filtered_image)))
+    plt.show()
 
     ifft_image = np.fft.ifft2(filtered_image)
     phase = np.arctan2(ifft_image.imag,ifft_image.real)
@@ -67,8 +67,8 @@ def demodulate_image(image):
 
     shift_image = get_carrier_frequency(window_image)
 
-    mask = box_filter(image, x_size=int(len(image)), y_size=75, centre=[int(len(image)/2),433])
-    dc_mask = box_filter(image, x_size=int(len(image)), y_size=75, centre=[int(len(image)/2), int(len(image)/2)])
+    mask = box_filter(image, x_size=int(len(image)), y_size=100, centre=[int(len(image)/2),433])
+    dc_mask = box_filter(image, x_size=int(len(image)), y_size=100, centre=[int(len(image)/2), int(len(image)/2)])
     phase, amplitude = filter_image(mask, shift_image)
 
     dc_phase, dc_amplitude = filter_image(dc_mask, shift_image)

@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.interpolate import interp2d
 import pandas as pd
+import xarray as xr
 
 from IMSE.Model.Light import Light
 from IMSE.Model.Observer import Camera
@@ -65,7 +66,9 @@ def save_image(image, filename):
 
     return
 
-filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_MASTU_edgecurrent/output/data/MASTU_edgecurrent.dat'
+#filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_MASTU_edgecurrent/output/data/MASTU_edgecurrent.dat'
+
+filepath = '/work/sgibson/msesim/runs/imse_2d_edgecurrent_nodivergence/output/data/MASTU_edgecurrent_nodivergence.dat'
 
 light = Light(filepath, dimension=2)
 
@@ -86,4 +89,6 @@ displacer_orientation = 90.
 camera = Camera(name='photron-sa4')
 lens = Lens(lens_focal_length)
 image = make_image(delay_L, delay_cut, delay_orientation, displacer_L, displacer_cut, displacer_orientation, material_name, FLC)
-save_image(image, filename='mastu_fiesta2.hdf')
+
+
+save_image(image, filename='mastu_nodivergence2.hdf')

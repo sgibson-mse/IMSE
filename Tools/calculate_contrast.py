@@ -80,6 +80,11 @@ for i in range(len(displacer_L)):
     contrast[:,i] = calculate_contrast(delay_L, delay_cut, delay_orientation, displacer_L[i], displacer_cut, displacer_orientation, material_name)
 
 plt.figure()
-plt.pcolormesh(camera.x, displacer_L, contrast.T)
-plt.colorbar()
+ax = plt.pcolormesh(camera.x*1000, displacer_L*1000, contrast.T*100)
+plt.xlabel('X Pixel (mm)')
+plt.ylabel('Displacer Thickness (mm)')
+cbar = plt.colorbar()
+cbar.ax.set_ylabel('Contrast')
+ax2 = plt.contour(camera.x*1000, displacer_L*1000, contrast.T*100, colors='black')
+ax2.clabel(inline=True, fontsize=20)
 plt.show()
