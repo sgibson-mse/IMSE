@@ -190,7 +190,7 @@ class MSESIM():
 
         self.total_circular_fraction = np.sqrt(self.S3**2)/self.S0
 
-        self.polarisation_angle = 0.5*np.arctan2(self.S2,self.S1)
+        self.polarisation_angle = 0.5*np.arctan2(np.sum(self.S2,axis=1),np.sum(self.S1,axis=1))
 
         return
 
@@ -257,6 +257,12 @@ class MSESIM():
         return
 
 # # #Example on how it works
+
+mastu_1ma = '/work/sgibson/msesim/runs/conventional_mse_mastu_fiesta1MA/output/data/conventional_mse_mastu.dat'
+mastu_1ma_run = MSESIM(filepath=mastu_1ma, dimension=1)
+
+
+
 # # #filepath = '/work/sgibson/msesim/runs/jet_mse_beamchange/output/data/JET_87123_linesplitting.dat'
 # filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_MASTU_edgecurrent/output/data/MASTU_edgecurrent.dat'
 # msesim = MSESIM(filepath=filepath, dimension=2)

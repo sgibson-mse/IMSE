@@ -3,10 +3,10 @@ from scipy.interpolate import interp2d
 import pandas as pd
 import xarray as xr
 
-from IMSE.Model.Light import Light
-from IMSE.Model.Observer import Camera
-from IMSE.Model.Optics import Lens
-from IMSE.Model.Crystal import Crystal
+from Model.Light import Light
+from Model.Observer import Camera
+from Model.Optics import Lens
+from Model.Crystal import Crystal
 
 def project_light(orientation):
     """
@@ -33,8 +33,6 @@ def make_image(delay_thickness, delay_cut_angle, delay_orientation, displacer_th
     S_out = np.zeros((len(camera.x), len(camera.y), len(light.wavelength)))
 
     for i, wavelength in enumerate(light.wavelength):
-
-        print(i)
 
         S0_interp = interp2d(light.x, light.y, light.S0[:,:,i], kind='quintic')
         S1_interp = interp2d(light.x, light.y, light.S1[:,:,i], kind='quintic')
@@ -67,12 +65,12 @@ def save_image(image, filename):
     return
 
 #filepath = '/work/sgibson/msesim/runs/imse_2d_32x32_MASTU_edgecurrent/output/data/MASTU_edgecurrent.dat'
-
-filepath = '/work/sgibson/msesim/runs/imse_2d_edgecurrent_nodivergence/output/data/MASTU_edgecurrent_nodivergence.dat'
+#filepath = '/work/sgibson/msesim/runs/imse_2d_edgecurrent_nodivergence/output/data/MASTU_edgecurrent_nodivergence.dat'
+filepath='/work/sgibson/msesim/runs/imse_2d_MASTU_1MA_wedge/output/data/MASTU_1MA.dat'
 
 light = Light(filepath, dimension=2)
 
-FLC = 90
+FLC = 45
 
 lens_focal_length = 85*10**-3
 
@@ -90,5 +88,4 @@ camera = Camera(name='photron-sa4')
 lens = Lens(lens_focal_length)
 image = make_image(delay_L, delay_cut, delay_orientation, displacer_L, displacer_cut, displacer_orientation, material_name, FLC)
 
-
-save_image(image, filename='mastu_nodivergence2.hdf')
+save_image(image, filename='mastu_1MA_P4_f85mm_-k0.1_FLC_45.hdf')

@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from IMSE.Tools.Plotting.graph_format import plot_format
+from Tools.Plotting.graph_format import plot_format
 
-from IMSE.Tools.load_msesim import MSESIM
+from Tools.load_msesim import MSESIM
 
 plot_format()
 
