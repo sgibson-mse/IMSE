@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from IMSE.Model.Material import Material
-from IMSE.Model.Constants import Constants
+from Model.Material import Material
+from Model.Constants import Constants
 
 constants = Constants()
 

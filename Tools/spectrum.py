@@ -80,6 +80,8 @@ def calculate_line_intensities(E, E_vectors, emission_vectors, doppler_shift):
 
         stark_shift = m * 2.77 * 10 ** -7 * E.z * (10 ** -10)
 
+        print('stark shift', stark_shift, 'doppler shift', doppler_shift[i])
+
         stark_wavelength[:,i] = stark_shift + doppler_shift[i]
 
         I_polarised[:,i] = (1 - ((E.dot(emission_vectors[i]))**2 / E.dot(E))) * transition_weights
