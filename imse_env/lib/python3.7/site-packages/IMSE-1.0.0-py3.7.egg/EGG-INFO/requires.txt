@@ -1,0 +1,4 @@
+pycpf==0.1
+Shapely==1.7.1
+uda==2.5.0
+uda-mast==1.3.3
